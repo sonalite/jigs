@@ -50,3 +50,20 @@ fn max_registers() {
         _ => panic!("Expected Add instruction"),
     }
 }
+
+#[test]
+fn different_registers() {
+    // add x10, x15, x20
+    // rd=10, rs1=15, rs2=20, funct3=0x0, funct7=0x00, opcode=0x33
+    let instruction_word = 0x01478533; // 0000000 10100 01111 000 01010 0110011
+    let instruction = Instruction::decode(instruction_word);
+
+    match instruction {
+        Instruction::Add { rd, rs1, rs2 } => {
+            assert_eq!(rd, 10);
+            assert_eq!(rs1, 15);
+            assert_eq!(rs2, 20);
+        }
+        _ => panic!("Expected Add instruction"),
+    }
+}

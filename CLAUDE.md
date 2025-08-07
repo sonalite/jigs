@@ -34,9 +34,9 @@ The project implements a RISC-V instruction decoder with:
 - Register addresses use x0-x31 notation in display output
 
 ## Code Coverage Requirements
-- When implementing new features, ensure code coverage improves in modified files
 - New code should have test coverage as close to 100% as possible
-- Run `cargo tarpaulin` to verify coverage before completing implementation
+- Always run `cargo tarpaulin` before committing
+- Coverage percentage must never decrease from the previous commit
 
 ## Testing Conventions
 - Unit tests should live in the `src/tests/` directory
@@ -46,4 +46,4 @@ The project implements a RISC-V instruction decoder with:
 
 ## Code Style Conventions
 - File ordering: module docs → `mod` declarations → `use` statements → constants → types → implementations
-- Before committing: ensure `cargo build`, `cargo test`, `cargo fmt -- --check`, and `cargo clippy` produce no warnings
+- Before committing: ensure `cargo build`, `cargo test`, `cargo tarpaulin`, `cargo fmt -- --check`, and `cargo clippy` produce no warnings

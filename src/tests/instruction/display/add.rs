@@ -29,3 +29,13 @@ fn max_registers() {
     };
     assert_eq!(format!("{}", instruction), "add x31, x31, x31");
 }
+
+#[test]
+fn different_registers() {
+    let instruction = Instruction::Add {
+        rd: 10,
+        rs1: 15,
+        rs2: 20,
+    };
+    assert_eq!(format!("{}", instruction), "add x10, x15, x20");
+}

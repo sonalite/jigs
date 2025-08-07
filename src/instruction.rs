@@ -17,8 +17,9 @@ const FUNCT7_SHIFT: u32 = 25;
 const REG_OPCODE: u32 = 0x33;
 
 // Function codes for R-type instructions
-const ADD_FUNCT3: u8 = 0x0;
+const ADDSUB_FUNCT3: u8 = 0x0; // Shared by ADD and SUB
 const ADD_FUNCT7: u32 = 0x00;
+const SUB_FUNCT7: u32 = 0x20;
 
 /// RISC-V instruction representation for 32-bit IM
 pub enum Instruction {
@@ -27,6 +28,12 @@ pub enum Instruction {
     /// Adds the values in registers `rs1` and `rs2` and stores the result in `rd`.
     /// Performs 32-bit arithmetic addition with overflow wrapping.
     Add { rd: u8, rs1: u8, rs2: u8 },
+
+    /// Sub instruction
+    ///
+    /// Subtracts the value in register `rs2` from `rs1` and stores the result in `rd`.
+    /// Performs 32-bit arithmetic subtraction with overflow wrapping.
+    Sub { rd: u8, rs1: u8, rs2: u8 },
 
     /// Unsupported instruction
     ///
@@ -39,6 +46,9 @@ impl fmt::Display for Instruction {
         match self {
             Instruction::Add { rd, rs1, rs2 } => {
                 write!(f, "add x{}, x{}, x{}", rd, rs1, rs2)
+            }
+            Instruction::Sub { rd, rs1, rs2 } => {
+                write!(f, "sub x{}, x{}, x{}", rd, rs1, rs2)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -65,9 +75,11 @@ impl Instruction {
                 let rs2 = ((word & RS2_MASK) >> RS2_SHIFT) as u8;
 
                 match funct3 {
-                    ADD_FUNCT3 => {
+                    ADDSUB_FUNCT3 => {
                         if funct7 == ADD_FUNCT7 {
                             Instruction::Add { rd, rs1, rs2 }
+                        } else if funct7 == SUB_FUNCT7 {
+                            Instruction::Sub { rd, rs1, rs2 }
                         } else {
                             Instruction::Unsupported(word)
                         }
