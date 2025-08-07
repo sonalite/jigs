@@ -3,7 +3,12 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-Jigs - A RISC-V instruction decoder implementation in Rust. Currently implements decoding and display formatting for 32-bit RISC-V instructions.
+Jigs - A high-performance RISC-V runtime for ARM64 systems with gas-metered execution. The project aims to build a complete RISC-V execution environment that:
+1. Decodes and encodes RISC-V 32-bit instructions
+2. JIT-compiles RISC-V code to native ARM64 for near-native performance
+3. Provides gas-metered execution for controlled resource usage in blockchain/sandboxed environments
+
+Currently implements decoding and display formatting for 32-bit RISC-V instructions, with encoding, JIT compilation, and gas tracking planned.
 
 ## Architecture
 The project implements a RISC-V instruction decoder with:
@@ -52,6 +57,7 @@ The project implements a RISC-V instruction decoder with:
 
 ## Git Commit Conventions
 - Always run `cargo fmt` immediately before committing to check for any formatting changes
+- Review and update the Architecture section in CLAUDE.md to ensure it reflects the current codebase structure
 - Focus commit messages on the primary functionality (e.g., "Implement XOR instruction" not "Update tests and add XOR")
 - Ask for user confirmation before committing to ensure accuracy
 
