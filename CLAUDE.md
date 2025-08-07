@@ -54,7 +54,7 @@ The project implements a RISC-V instruction decoder with:
 - Ask for user confirmation before committing to ensure accuracy
 
 ## Development Tracking
-- **PLAN.md**: Contains the roadmap of planned features and implementation status
-- When implementing features or making changes to the codebase, update PLAN.md to reflect the current status
+- **@docs/ROADMAP.md**: Contains the roadmap of planned features and implementation status
+- When implementing features or making changes to the codebase, update the relevant project document linked from ROADMAP.md to reflect the current status
 - Mark features as "Completed" when fully implemented and tested
 - Add notes about any deviations from the original plan or additional features discovered during implementation
