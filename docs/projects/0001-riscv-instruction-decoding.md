@@ -78,7 +78,8 @@ Implementation of RISC-V 32-bit instruction decoder with support for all RV32IM 
 - 📋 REM (remainder signed)
 - 📋 REMU (remainder unsigned)
 
-### Testing & Quality ✅
+### Testing & Quality 🚧
 - ✅ 100% code coverage for instruction.rs maintained throughout development
 - ✅ Comprehensive test suite for each instruction (basic, zero_registers, max_registers, different_registers, wrong_funct7)
+- 📋 Add module-level documentation to instruction.rs
 - 📋 Compare implementation against RISC-V spec for correctness
