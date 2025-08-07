@@ -150,6 +150,12 @@ pub enum Instruction {
     /// Performs logical right shift (zero-fill).
     Srli { rd: u8, rs1: u8, shamt: u8 },
 
+    /// Srai instruction
+    ///
+    /// Shifts the value in register `rs1` right by the immediate shift amount (lower 5 bits) and stores the result in `rd`.
+    /// Performs arithmetic right shift (sign-extend).
+    Srai { rd: u8, rs1: u8, shamt: u8 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -212,6 +218,9 @@ impl fmt::Display for Instruction {
             }
             Instruction::Srli { rd, rs1, shamt } => {
                 write!(f, "srli x{}, x{}, {}", rd, rs1, shamt)
+            }
+            Instruction::Srai { rd, rs1, shamt } => {
+                write!(f, "srai x{}, x{}, {}", rd, rs1, shamt)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -341,8 +350,9 @@ impl Instruction {
                         let upper_bits = (imm_raw >> 5) & 0x7F;
                         if upper_bits == 0x00 {
                             Instruction::Srli { rd, rs1, shamt }
+                        } else if upper_bits == 0x20 {
+                            Instruction::Srai { rd, rs1, shamt }
                         } else {
-                            // SRAI will be handled here when implemented
                             Instruction::Unsupported(word)
                         }
                     }

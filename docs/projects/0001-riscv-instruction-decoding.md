@@ -25,7 +25,7 @@ Implementation of RISC-V 32-bit instruction decoder with support for all RV32IM 
 - ✅ AND instruction (funct3=0x7, funct7=0x00)
 - ✅ All R-type instructions complete with 92 passing tests
 
-### I-Type Instructions (Immediate) 🚧
+### I-Type Instructions (Immediate) ✅
 - ✅ ADDI (add immediate)
 - ✅ SLTI (set less than immediate)
 - ✅ SLTIU (set less than immediate unsigned)
@@ -34,7 +34,7 @@ Implementation of RISC-V 32-bit instruction decoder with support for all RV32IM 
 - ✅ ANDI (AND immediate)
 - ✅ SLLI (shift left logical immediate)
 - ✅ SRLI (shift right logical immediate)
-- 📋 SRAI
+- ✅ SRAI (shift right arithmetic immediate)
 
 ### Load Instructions 📋
 - 📋 LB (load byte)

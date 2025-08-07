@@ -87,13 +87,17 @@ fn min_shift_amount() {
 
 #[test]
 fn wrong_upper_bits() {
-    // srli with wrong upper bits (should be 0x00, using 0x20 which would be SRAI)
+    // srli with wrong upper bits (should be 0x00, using 0x20 which is SRAI)
     // rd=15, rs1=14, shamt=5, wrong upper bits, funct3=0x5, opcode=0x13
     let instruction_word = 0x40575793; // 0100000 00101 01110 101 01111 0010011
     let instruction = Instruction::decode(instruction_word);
 
     match instruction {
-        Instruction::Unsupported(_) => {}
-        _ => panic!("Expected Unsupported instruction (this will be SRAI when implemented)"),
+        Instruction::Srai {
+            rd: 15,
+            rs1: 14,
+            shamt: 5,
+        } => {}
+        _ => panic!("Expected SRAI instruction with these specific values"),
     }
 }
