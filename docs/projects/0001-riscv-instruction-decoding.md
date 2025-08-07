@@ -43,10 +43,10 @@ Implementation of RISC-V 32-bit instruction decoder with support for all RV32IM 
 - ✅ LBU (load byte unsigned)
 - ✅ LHU (load halfword unsigned)
 
-### Store Instructions 📋
-- 📋 SB (store byte)
-- 📋 SH (store halfword)
-- 📋 SW (store word)
+### Store Instructions ✅
+- ✅ SB (store byte)
+- ✅ SH (store halfword)
+- ✅ SW (store word)
 
 ### Branch Instructions 📋
 - 📋 BEQ (branch equal)

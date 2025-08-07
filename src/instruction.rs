@@ -17,10 +17,17 @@ const FUNCT7_SHIFT: u32 = 25;
 const IMM_I_MASK: u32 = 0xFFF00000;
 const IMM_I_SHIFT: u32 = 20;
 
+// S-type immediate masks and shifts
+const IMM_S_11_5_MASK: u32 = 0xFE000000;
+const IMM_S_11_5_SHIFT: u32 = 25;
+const IMM_S_4_0_MASK: u32 = 0xF80;
+const IMM_S_4_0_SHIFT: u32 = 7;
+
 // Opcodes
 const REG_OPCODE: u32 = 0x33;
 const IMM_OPCODE: u32 = 0x13;
 const LOAD_OPCODE: u32 = 0x03;
+const STORE_OPCODE: u32 = 0x23;
 
 // Function codes for I-type instructions
 const ADDI_FUNCT3: u8 = 0x0;
@@ -38,6 +45,11 @@ const LH_FUNCT3: u8 = 0x1;
 const LW_FUNCT3: u8 = 0x2;
 const LBU_FUNCT3: u8 = 0x4;
 const LHU_FUNCT3: u8 = 0x5;
+
+// Function codes for Store instructions
+const SB_FUNCT3: u8 = 0x0;
+const SH_FUNCT3: u8 = 0x1;
+const SW_FUNCT3: u8 = 0x2;
 
 // Function codes for R-type instructions
 const ADD_SUB_FUNCT3: u8 = 0x0; // Shared by ADD and SUB
@@ -189,6 +201,21 @@ pub enum Instruction {
     /// Loads a halfword (16 bits) from memory at address `rs1 + imm` and zero-extends it to 32 bits, storing the result in `rd`.
     Lhu { rd: u8, rs1: u8, imm: i32 },
 
+    /// Sb instruction
+    ///
+    /// Stores the least significant byte from register `rs2` to memory at address `rs1 + imm`.
+    Sb { rs1: u8, rs2: u8, imm: i32 },
+
+    /// Sh instruction
+    ///
+    /// Stores the least significant halfword (16 bits) from register `rs2` to memory at address `rs1 + imm`.
+    Sh { rs1: u8, rs2: u8, imm: i32 },
+
+    /// Sw instruction
+    ///
+    /// Stores a word (32 bits) from register `rs2` to memory at address `rs1 + imm`.
+    Sw { rs1: u8, rs2: u8, imm: i32 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -269,6 +296,15 @@ impl fmt::Display for Instruction {
             }
             Instruction::Lhu { rd, rs1, imm } => {
                 write!(f, "lhu x{}, {}(x{})", rd, imm, rs1)
+            }
+            Instruction::Sb { rs1, rs2, imm } => {
+                write!(f, "sb x{}, {}(x{})", rs2, imm, rs1)
+            }
+            Instruction::Sh { rs1, rs2, imm } => {
+                write!(f, "sh x{}, {}(x{})", rs2, imm, rs1)
+            }
+            Instruction::Sw { rs1, rs2, imm } => {
+                write!(f, "sw x{}, {}(x{})", rs2, imm, rs1)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -432,6 +468,29 @@ impl Instruction {
                     LW_FUNCT3 => Instruction::Lw { rd, rs1, imm },
                     LBU_FUNCT3 => Instruction::Lbu { rd, rs1, imm },
                     LHU_FUNCT3 => Instruction::Lhu { rd, rs1, imm },
+                    _ => Instruction::Unsupported(word),
+                }
+            }
+            STORE_OPCODE => {
+                let funct3 = (((word & FUNCT3_MASK) >> FUNCT3_SHIFT) & 0x7) as u8;
+                let rs1 = ((word & RS1_MASK) >> RS1_SHIFT) as u8;
+                let rs2 = ((word & RS2_MASK) >> RS2_SHIFT) as u8;
+                // S-type immediate is split into two parts
+                let imm_11_5 = (word & IMM_S_11_5_MASK) >> IMM_S_11_5_SHIFT;
+                let imm_4_0 = (word & IMM_S_4_0_MASK) >> IMM_S_4_0_SHIFT;
+                let imm_raw = (imm_11_5 << 5) | imm_4_0;
+                // Sign-extend the 12-bit immediate
+                let imm = if imm_raw & 0x800 != 0 {
+                    // Sign bit is set, sign-extend
+                    (imm_raw | 0xFFFFF000) as i32
+                } else {
+                    imm_raw as i32
+                };
+
+                match funct3 {
+                    SB_FUNCT3 => Instruction::Sb { rs1, rs2, imm },
+                    SH_FUNCT3 => Instruction::Sh { rs1, rs2, imm },
+                    SW_FUNCT3 => Instruction::Sw { rs1, rs2, imm },
                     _ => Instruction::Unsupported(word),
                 }
             }
