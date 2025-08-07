@@ -26,8 +26,9 @@ const XOR_FUNCT3: u8 = 0x4;
 const XOR_FUNCT7: u32 = 0x00;
 const OR_FUNCT3: u8 = 0x6;
 const OR_FUNCT7: u32 = 0x00;
-const SRL_FUNCT3: u8 = 0x5;
+const SRL_SRA_FUNCT3: u8 = 0x5; // Shared by SRL and SRA
 const SRL_FUNCT7: u32 = 0x00;
+const SRA_FUNCT7: u32 = 0x20;
 
 /// RISC-V instruction representation for 32-bit IM
 pub enum Instruction {
@@ -64,6 +65,12 @@ pub enum Instruction {
     /// Performs logical right shift (zero-fill).
     Srl { rd: u8, rs1: u8, rs2: u8 },
 
+    /// Sra instruction
+    ///
+    /// Shifts the value in register `rs1` right by the shift amount held in the lower 5 bits of register `rs2` and stores the result in `rd`.
+    /// Performs arithmetic right shift (sign-extend).
+    Sra { rd: u8, rs1: u8, rs2: u8 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -90,6 +97,9 @@ impl fmt::Display for Instruction {
             }
             Instruction::Srl { rd, rs1, rs2 } => {
                 write!(f, "srl x{}, x{}, x{}", rd, rs1, rs2)
+            }
+            Instruction::Sra { rd, rs1, rs2 } => {
+                write!(f, "sra x{}, x{}, x{}", rd, rs1, rs2)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -139,9 +149,11 @@ impl Instruction {
                             Instruction::Unsupported(word)
                         }
                     }
-                    SRL_FUNCT3 => {
+                    SRL_SRA_FUNCT3 => {
                         if funct7 == SRL_FUNCT7 {
                             Instruction::Srl { rd, rs1, rs2 }
+                        } else if funct7 == SRA_FUNCT7 {
+                            Instruction::Sra { rd, rs1, rs2 }
                         } else {
                             Instruction::Unsupported(word)
                         }
