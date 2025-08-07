@@ -52,3 +52,9 @@ The project implements a RISC-V instruction decoder with:
 ## Git Commit Conventions
 - Focus commit messages on the primary functionality (e.g., "Implement XOR instruction" not "Update tests and add XOR")
 - Ask for user confirmation before committing to ensure accuracy
+
+## Development Tracking
+- **PLAN.md**: Contains the roadmap of planned features and implementation status
+- When implementing features or making changes to the codebase, update PLAN.md to reflect the current status
+- Mark features as "Completed" when fully implemented and tested
+- Add notes about any deviations from the original plan or additional features discovered during implementation
