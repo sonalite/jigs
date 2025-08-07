@@ -18,7 +18,7 @@ fn basic() {
 }
 
 #[test]
-fn zero_register() {
+fn zero_registers() {
     // add x0, x0, x0
     // rd=0, rs1=0, rs2=0, funct3=0x0, funct7=0x00, opcode=0x33
     let instruction_word = 0x00000033; // 0000000 00000 00000 000 00000 0110011

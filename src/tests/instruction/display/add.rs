@@ -11,7 +11,7 @@ fn basic() {
 }
 
 #[test]
-fn zero_register() {
+fn zero_registers() {
     let instruction = Instruction::Add {
         rd: 0,
         rs1: 0,
