@@ -13,3 +13,4 @@ Initial project setup and infrastructure.
 - ✅ Establish testing conventions and directory structure
 - ✅ Configure release builds for maximum performance
 - 📋 Lock in the rust version using rust-toolchain.toml
+- 📋 Setup Dependabot for automated dependency updates
