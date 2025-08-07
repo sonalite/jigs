@@ -30,8 +30,8 @@ Implementation of RISC-V 32-bit instruction decoder with support for all RV32IM 
 - ✅ SLTI (set less than immediate)
 - ✅ SLTIU (set less than immediate unsigned)
 - ✅ XORI (XOR immediate)
-- 📋 ORI
-- 📋 ANDI
+- ✅ ORI (OR immediate)
+- ✅ ANDI (AND immediate)
 - 📋 SLLI
 - 📋 SRLI
 - 📋 SRAI
