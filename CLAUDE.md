@@ -56,5 +56,9 @@ The project implements a RISC-V instruction decoder with:
 ## Development Tracking
 - **@docs/ROADMAP.md**: Contains the roadmap of planned features and implementation status
 - When implementing features or making changes to the codebase, update the relevant project document linked from ROADMAP.md to reflect the current status
-- Mark features as "Completed" when fully implemented and tested
+- Mark individual tasks as "Completed" (✅) when fully implemented and tested
+- Update project status icons in both the project file header and ROADMAP.md:
+  - Use ✅ (Complete) when ALL tasks in a project are marked with ✅
+  - Use 🚧 (In Progress) when any tasks are marked with 🚧 or a mix of ✅ and 📋
+  - Use 📋 (Planned) when all tasks are marked with 📋
 - Add notes about any deviations from the original plan or additional features discovered during implementation
