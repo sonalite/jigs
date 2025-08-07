@@ -36,12 +36,12 @@ Implementation of RISC-V 32-bit instruction decoder with support for all RV32IM 
 - ✅ SRLI (shift right logical immediate)
 - ✅ SRAI (shift right arithmetic immediate)
 
-### Load Instructions 📋
-- 📋 LB (load byte)
-- 📋 LH (load halfword)
-- 📋 LW (load word)
-- 📋 LBU (load byte unsigned)
-- 📋 LHU (load halfword unsigned)
+### Load Instructions ✅
+- ✅ LB (load byte)
+- ✅ LH (load halfword)
+- ✅ LW (load word)
+- ✅ LBU (load byte unsigned)
+- ✅ LHU (load halfword unsigned)
 
 ### Store Instructions 📋
 - 📋 SB (store byte)

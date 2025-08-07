@@ -20,6 +20,7 @@ const IMM_I_SHIFT: u32 = 20;
 // Opcodes
 const REG_OPCODE: u32 = 0x33;
 const IMM_OPCODE: u32 = 0x13;
+const LOAD_OPCODE: u32 = 0x03;
 
 // Function codes for I-type instructions
 const ADDI_FUNCT3: u8 = 0x0;
@@ -30,6 +31,13 @@ const XORI_FUNCT3: u8 = 0x4;
 const SRLI_SRAI_FUNCT3: u8 = 0x5; // Shared by SRLI and SRAI
 const ORI_FUNCT3: u8 = 0x6;
 const ANDI_FUNCT3: u8 = 0x7;
+
+// Function codes for Load instructions
+const LB_FUNCT3: u8 = 0x0;
+const LH_FUNCT3: u8 = 0x1;
+const LW_FUNCT3: u8 = 0x2;
+const LBU_FUNCT3: u8 = 0x4;
+const LHU_FUNCT3: u8 = 0x5;
 
 // Function codes for R-type instructions
 const ADD_SUB_FUNCT3: u8 = 0x0; // Shared by ADD and SUB
@@ -156,6 +164,31 @@ pub enum Instruction {
     /// Performs arithmetic right shift (sign-extend).
     Srai { rd: u8, rs1: u8, shamt: u8 },
 
+    /// Lb instruction
+    ///
+    /// Loads a byte from memory at address `rs1 + imm` and sign-extends it to 32 bits, storing the result in `rd`.
+    Lb { rd: u8, rs1: u8, imm: i32 },
+
+    /// Lh instruction
+    ///
+    /// Loads a halfword (16 bits) from memory at address `rs1 + imm` and sign-extends it to 32 bits, storing the result in `rd`.
+    Lh { rd: u8, rs1: u8, imm: i32 },
+
+    /// Lw instruction
+    ///
+    /// Loads a word (32 bits) from memory at address `rs1 + imm`, storing the result in `rd`.
+    Lw { rd: u8, rs1: u8, imm: i32 },
+
+    /// Lbu instruction
+    ///
+    /// Loads a byte from memory at address `rs1 + imm` and zero-extends it to 32 bits, storing the result in `rd`.
+    Lbu { rd: u8, rs1: u8, imm: i32 },
+
+    /// Lhu instruction
+    ///
+    /// Loads a halfword (16 bits) from memory at address `rs1 + imm` and zero-extends it to 32 bits, storing the result in `rd`.
+    Lhu { rd: u8, rs1: u8, imm: i32 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -221,6 +254,21 @@ impl fmt::Display for Instruction {
             }
             Instruction::Srai { rd, rs1, shamt } => {
                 write!(f, "srai x{}, x{}, {}", rd, rs1, shamt)
+            }
+            Instruction::Lb { rd, rs1, imm } => {
+                write!(f, "lb x{}, {}(x{})", rd, imm, rs1)
+            }
+            Instruction::Lh { rd, rs1, imm } => {
+                write!(f, "lh x{}, {}(x{})", rd, imm, rs1)
+            }
+            Instruction::Lw { rd, rs1, imm } => {
+                write!(f, "lw x{}, {}(x{})", rd, imm, rs1)
+            }
+            Instruction::Lbu { rd, rs1, imm } => {
+                write!(f, "lbu x{}, {}(x{})", rd, imm, rs1)
+            }
+            Instruction::Lhu { rd, rs1, imm } => {
+                write!(f, "lhu x{}, {}(x{})", rd, imm, rs1)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -363,6 +411,28 @@ impl Instruction {
                         // and all values 0-7 are handled above
                         unreachable!()
                     }
+                }
+            }
+            LOAD_OPCODE => {
+                let funct3 = (((word & FUNCT3_MASK) >> FUNCT3_SHIFT) & 0x7) as u8;
+                let rd = ((word & RD_MASK) >> RD_SHIFT) as u8;
+                let rs1 = ((word & RS1_MASK) >> RS1_SHIFT) as u8;
+                // Sign-extend the 12-bit immediate
+                let imm_raw = (word & IMM_I_MASK) >> IMM_I_SHIFT;
+                let imm = if imm_raw & 0x800 != 0 {
+                    // Sign bit is set, sign-extend
+                    (imm_raw | 0xFFFFF000) as i32
+                } else {
+                    imm_raw as i32
+                };
+
+                match funct3 {
+                    LB_FUNCT3 => Instruction::Lb { rd, rs1, imm },
+                    LH_FUNCT3 => Instruction::Lh { rd, rs1, imm },
+                    LW_FUNCT3 => Instruction::Lw { rd, rs1, imm },
+                    LBU_FUNCT3 => Instruction::Lbu { rd, rs1, imm },
+                    LHU_FUNCT3 => Instruction::Lhu { rd, rs1, imm },
+                    _ => Instruction::Unsupported(word),
                 }
             }
             _ => Instruction::Unsupported(word),
