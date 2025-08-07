@@ -33,6 +33,8 @@ const SLT_FUNCT3: u8 = 0x2;
 const SLT_FUNCT7: u32 = 0x00;
 const SLTU_FUNCT3: u8 = 0x3;
 const SLTU_FUNCT7: u32 = 0x00;
+const AND_FUNCT3: u8 = 0x7;
+const AND_FUNCT7: u32 = 0x00;
 
 /// RISC-V instruction representation for 32-bit IM
 pub enum Instruction {
@@ -85,6 +87,11 @@ pub enum Instruction {
     /// Sets `rd` to 1 if the unsigned value in register `rs1` is less than the unsigned value in register `rs2`, otherwise sets `rd` to 0.
     Sltu { rd: u8, rs1: u8, rs2: u8 },
 
+    /// And instruction
+    ///
+    /// Performs bitwise AND between the values in registers `rs1` and `rs2` and stores the result in `rd`.
+    And { rd: u8, rs1: u8, rs2: u8 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -120,6 +127,9 @@ impl fmt::Display for Instruction {
             }
             Instruction::Sltu { rd, rs1, rs2 } => {
                 write!(f, "sltu x{}, x{}, x{}", rd, rs1, rs2)
+            }
+            Instruction::And { rd, rs1, rs2 } => {
+                write!(f, "and x{}, x{}, x{}", rd, rs1, rs2)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -199,7 +209,18 @@ impl Instruction {
                             Instruction::Unsupported(word)
                         }
                     }
-                    _ => Instruction::Unsupported(word),
+                    AND_FUNCT3 => {
+                        if funct7 == AND_FUNCT7 {
+                            Instruction::And { rd, rs1, rs2 }
+                        } else {
+                            Instruction::Unsupported(word)
+                        }
+                    }
+                    _ => {
+                        // This case is unreachable since funct3 is masked to 3 bits (0-7)
+                        // and all values are handled above
+                        unreachable!()
+                    }
                 }
             }
             _ => Instruction::Unsupported(word),
