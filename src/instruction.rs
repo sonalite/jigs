@@ -27,6 +27,7 @@ const SLLI_FUNCT3: u8 = 0x1;
 const SLTI_FUNCT3: u8 = 0x2;
 const SLTIU_FUNCT3: u8 = 0x3;
 const XORI_FUNCT3: u8 = 0x4;
+const SRLI_SRAI_FUNCT3: u8 = 0x5; // Shared by SRLI and SRAI
 const ORI_FUNCT3: u8 = 0x6;
 const ANDI_FUNCT3: u8 = 0x7;
 
@@ -143,6 +144,12 @@ pub enum Instruction {
     /// Shifts the value in register `rs1` left by the immediate shift amount (lower 5 bits) and stores the result in `rd`.
     Slli { rd: u8, rs1: u8, shamt: u8 },
 
+    /// Srli instruction
+    ///
+    /// Shifts the value in register `rs1` right by the immediate shift amount (lower 5 bits) and stores the result in `rd`.
+    /// Performs logical right shift (zero-fill).
+    Srli { rd: u8, rs1: u8, shamt: u8 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -202,6 +209,9 @@ impl fmt::Display for Instruction {
             }
             Instruction::Slli { rd, rs1, shamt } => {
                 write!(f, "slli x{}, x{}, {}", rd, rs1, shamt)
+            }
+            Instruction::Srli { rd, rs1, shamt } => {
+                write!(f, "srli x{}, x{}, {}", rd, rs1, shamt)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -324,9 +334,25 @@ impl Instruction {
                     SLTI_FUNCT3 => Instruction::Slti { rd, rs1, imm },
                     SLTIU_FUNCT3 => Instruction::Sltiu { rd, rs1, imm },
                     XORI_FUNCT3 => Instruction::Xori { rd, rs1, imm },
+                    SRLI_SRAI_FUNCT3 => {
+                        // For SRLI/SRAI, the immediate encodes the shift amount in lower 5 bits
+                        // and the upper 7 bits determine which instruction (0x00 for SRLI, 0x20 for SRAI)
+                        let shamt = (imm_raw & 0x1F) as u8;
+                        let upper_bits = (imm_raw >> 5) & 0x7F;
+                        if upper_bits == 0x00 {
+                            Instruction::Srli { rd, rs1, shamt }
+                        } else {
+                            // SRAI will be handled here when implemented
+                            Instruction::Unsupported(word)
+                        }
+                    }
                     ORI_FUNCT3 => Instruction::Ori { rd, rs1, imm },
                     ANDI_FUNCT3 => Instruction::Andi { rd, rs1, imm },
-                    _ => Instruction::Unsupported(word),
+                    _ => {
+                        // This case is unreachable since funct3 is masked to 3 bits (0-7)
+                        // and all values 0-7 are handled above
+                        unreachable!()
+                    }
                 }
             }
             _ => Instruction::Unsupported(word),

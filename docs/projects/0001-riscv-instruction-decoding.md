@@ -33,7 +33,7 @@ Implementation of RISC-V 32-bit instruction decoder with support for all RV32IM 
 - ✅ ORI (OR immediate)
 - ✅ ANDI (AND immediate)
 - ✅ SLLI (shift left logical immediate)
-- 📋 SRLI
+- ✅ SRLI (shift right logical immediate)
 - 📋 SRAI
 
 ### Load Instructions 📋

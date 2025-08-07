@@ -101,19 +101,3 @@ fn max_negative_immediate() {
         _ => panic!("Expected Slti instruction"),
     }
 }
-
-#[test]
-fn invalid_funct3() {
-    // I-type instruction with invalid funct3 for SLTI context
-    // Using funct3=0x5 which is not yet implemented
-    // rd=1, rs1=2, imm=10, funct3=0x5 (SRLI/SRAI - not yet implemented), opcode=0x13
-    let instruction_word = 0x00A15093; // 000000001010 00010 101 00001 0010011
-    let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Unsupported(word) => {
-            assert_eq!(word, 0x00A15093);
-        }
-        _ => panic!("Expected Unsupported instruction for invalid funct3"),
-    }
-}
