@@ -48,6 +48,7 @@ const AND_FUNCT3: u8 = 0x7;
 const AND_FUNCT7: u32 = 0x00;
 
 /// RISC-V instruction representation for 32-bit IM
+#[derive(Debug)]
 pub enum Instruction {
     /// Add instruction
     ///
@@ -116,8 +117,8 @@ pub enum Instruction {
 
     /// Sltiu instruction
     ///
-    /// Sets `rd` to 1 if the unsigned value in register `rs1` is less than the zero-extended 12-bit immediate, otherwise sets `rd` to 0.
-    Sltiu { rd: u8, rs1: u8, imm: u32 },
+    /// Sets `rd` to 1 if the unsigned value in register `rs1` is less than the sign-extended 12-bit immediate (compared as unsigned), otherwise sets `rd` to 0.
+    Sltiu { rd: u8, rs1: u8, imm: i32 },
 
     /// Xori instruction
     ///
@@ -283,15 +284,7 @@ impl Instruction {
                 match funct3 {
                     ADDI_FUNCT3 => Instruction::Addi { rd, rs1, imm },
                     SLTI_FUNCT3 => Instruction::Slti { rd, rs1, imm },
-                    SLTIU_FUNCT3 => {
-                        // For SLTIU, zero-extend the 12-bit immediate
-                        let imm_unsigned = ((word & IMM_I_MASK) >> IMM_I_SHIFT) & 0xFFF;
-                        Instruction::Sltiu {
-                            rd,
-                            rs1,
-                            imm: imm_unsigned,
-                        }
-                    }
+                    SLTIU_FUNCT3 => Instruction::Sltiu { rd, rs1, imm },
                     XORI_FUNCT3 => Instruction::Xori { rd, rs1, imm },
                     _ => Instruction::Unsupported(word),
                 }

@@ -41,21 +41,41 @@ fn different_registers() {
 }
 
 #[test]
-fn medium_immediate() {
+fn max_positive_immediate() {
     let instruction = Instruction::Sltiu {
         rd: 7,
         rs1: 8,
-        imm: 2047,
+        imm: 2047, // 0x7FF - max positive 12-bit signed
     };
     assert_eq!(format!("{}", instruction), "sltiu x7, x8, 2047");
 }
 
 #[test]
-fn max_immediate() {
+fn negative_immediate() {
     let instruction = Instruction::Sltiu {
         rd: 11,
         rs1: 12,
-        imm: 4095,
+        imm: -1,
     };
-    assert_eq!(format!("{}", instruction), "sltiu x11, x12, 4095");
+    assert_eq!(format!("{}", instruction), "sltiu x11, x12, -1");
+}
+
+#[test]
+fn min_negative_immediate() {
+    let instruction = Instruction::Sltiu {
+        rd: 15,
+        rs1: 16,
+        imm: -2048, // 0x800 - min negative 12-bit signed
+    };
+    assert_eq!(format!("{}", instruction), "sltiu x15, x16, -2048");
+}
+
+#[test]
+fn seqz_pseudo_instruction() {
+    let instruction = Instruction::Sltiu {
+        rd: 1,
+        rs1: 2,
+        imm: 1,
+    };
+    assert_eq!(format!("{}", instruction), "sltiu x1, x2, 1");
 }
