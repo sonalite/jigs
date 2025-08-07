@@ -28,7 +28,7 @@ Implementation of RISC-V 32-bit instruction decoder with support for all RV32IM 
 ### I-Type Instructions (Immediate) 🚧
 - ✅ ADDI (add immediate)
 - ✅ SLTI (set less than immediate)
-- 📋 SLTIU
+- ✅ SLTIU (set less than immediate unsigned)
 - 📋 XORI
 - 📋 ORI
 - 📋 ANDI

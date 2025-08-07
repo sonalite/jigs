@@ -24,6 +24,7 @@ const IMM_OPCODE: u32 = 0x13;
 // Function codes for I-type instructions
 const ADDI_FUNCT3: u8 = 0x0;
 const SLTI_FUNCT3: u8 = 0x2;
+const SLTIU_FUNCT3: u8 = 0x3;
 
 // Function codes for R-type instructions
 const ADD_SUB_FUNCT3: u8 = 0x0; // Shared by ADD and SUB
@@ -112,6 +113,11 @@ pub enum Instruction {
     /// Sets `rd` to 1 if the signed value in register `rs1` is less than the sign-extended 12-bit immediate, otherwise sets `rd` to 0.
     Slti { rd: u8, rs1: u8, imm: i32 },
 
+    /// Sltiu instruction
+    ///
+    /// Sets `rd` to 1 if the unsigned value in register `rs1` is less than the zero-extended 12-bit immediate, otherwise sets `rd` to 0.
+    Sltiu { rd: u8, rs1: u8, imm: u32 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -156,6 +162,9 @@ impl fmt::Display for Instruction {
             }
             Instruction::Slti { rd, rs1, imm } => {
                 write!(f, "slti x{}, x{}, {}", rd, rs1, imm)
+            }
+            Instruction::Sltiu { rd, rs1, imm } => {
+                write!(f, "sltiu x{}, x{}, {}", rd, rs1, imm)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -265,6 +274,15 @@ impl Instruction {
                 match funct3 {
                     ADDI_FUNCT3 => Instruction::Addi { rd, rs1, imm },
                     SLTI_FUNCT3 => Instruction::Slti { rd, rs1, imm },
+                    SLTIU_FUNCT3 => {
+                        // For SLTIU, zero-extend the 12-bit immediate
+                        let imm_unsigned = ((word & IMM_I_MASK) >> IMM_I_SHIFT) & 0xFFF;
+                        Instruction::Sltiu {
+                            rd,
+                            rs1,
+                            imm: imm_unsigned,
+                        }
+                    }
                     _ => Instruction::Unsupported(word),
                 }
             }
