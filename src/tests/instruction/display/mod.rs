@@ -1,4 +1,5 @@
 mod add;
+mod addi;
 mod and;
 mod or;
 mod sll;

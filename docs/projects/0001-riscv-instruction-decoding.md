@@ -26,7 +26,7 @@ Implementation of RISC-V 32-bit instruction decoder with support for all RV32IM 
 - ✅ All R-type instructions complete with 92 passing tests
 
 ### I-Type Instructions (Immediate) 🚧
-- 🚧 ADDI
+- ✅ ADDI (add immediate)
 - 📋 SLTI
 - 📋 SLTIU
 - 📋 XORI

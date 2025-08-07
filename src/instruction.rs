@@ -13,8 +13,16 @@ const RS2_SHIFT: u32 = 20;
 const FUNCT7_MASK: u32 = 0xFE000000;
 const FUNCT7_SHIFT: u32 = 25;
 
+// I-type immediate mask and shift
+const IMM_I_MASK: u32 = 0xFFF00000;
+const IMM_I_SHIFT: u32 = 20;
+
 // Opcodes
 const REG_OPCODE: u32 = 0x33;
+const IMM_OPCODE: u32 = 0x13;
+
+// Function codes for I-type instructions
+const ADDI_FUNCT3: u8 = 0x0;
 
 // Function codes for R-type instructions
 const ADD_SUB_FUNCT3: u8 = 0x0; // Shared by ADD and SUB
@@ -92,6 +100,12 @@ pub enum Instruction {
     /// Performs bitwise AND between the values in registers `rs1` and `rs2` and stores the result in `rd`.
     And { rd: u8, rs1: u8, rs2: u8 },
 
+    /// Addi instruction
+    ///
+    /// Adds the sign-extended 12-bit immediate to the value in register `rs1` and stores the result in `rd`.
+    /// Performs 32-bit arithmetic addition with overflow wrapping.
+    Addi { rd: u8, rs1: u8, imm: i32 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -130,6 +144,9 @@ impl fmt::Display for Instruction {
             }
             Instruction::And { rd, rs1, rs2 } => {
                 write!(f, "and x{}, x{}, x{}", rd, rs1, rs2)
+            }
+            Instruction::Addi { rd, rs1, imm } => {
+                write!(f, "addi x{}, x{}, {}", rd, rs1, imm)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -221,6 +238,24 @@ impl Instruction {
                         // and all values are handled above
                         unreachable!()
                     }
+                }
+            }
+            IMM_OPCODE => {
+                let funct3 = (((word & FUNCT3_MASK) >> FUNCT3_SHIFT) & 0x7) as u8;
+                let rd = ((word & RD_MASK) >> RD_SHIFT) as u8;
+                let rs1 = ((word & RS1_MASK) >> RS1_SHIFT) as u8;
+                // Sign-extend the 12-bit immediate
+                let imm_raw = (word & IMM_I_MASK) >> IMM_I_SHIFT;
+                let imm = if imm_raw & 0x800 != 0 {
+                    // Sign bit is set, sign-extend
+                    (imm_raw | 0xFFFFF000) as i32
+                } else {
+                    imm_raw as i32
+                };
+
+                match funct3 {
+                    ADDI_FUNCT3 => Instruction::Addi { rd, rs1, imm },
+                    _ => Instruction::Unsupported(word),
                 }
             }
             _ => Instruction::Unsupported(word),
