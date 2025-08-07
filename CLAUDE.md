@@ -19,9 +19,9 @@ The project implements a RISC-V instruction decoder with:
 - Build: `cargo build`
 - Run: `cargo run`
 - Test all: `cargo test`
+- Run single test: `cargo test tests::instruction::decode::add::basic`
 - Test specific functionality: `cargo test instruction::decode`
 - Test with output: `cargo test -- --nocapture`
-- Run single test: `cargo test test_add_x1_x2_x3`
 - Code coverage: `cargo tarpaulin`
 - Format code: `cargo fmt`
 - Check formatting: `cargo fmt -- --check`
@@ -42,6 +42,7 @@ The project implements a RISC-V instruction decoder with:
 - Unit tests should live in the `src/tests/` directory
 - For small test suites: use a single file (e.g., `src/tests/feature.rs`)
 - For large test suites: create a folder with separate files organized by feature (e.g., `src/tests/instruction/decode/add.rs`, `src/tests/instruction/decode/sub.rs`)
+- Test names should be concise and NOT include "test" or the subject being tested, as this is implied by the module structure (e.g., in `tests/instruction/decode/add.rs`, use `fn basic()` not `fn test_add_basic()`)
 
 ## Code Style Conventions
 - File ordering: module docs → `mod` declarations → `use` statements → constants → types → implementations
