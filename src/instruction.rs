@@ -20,6 +20,8 @@ const REG_OPCODE: u32 = 0x33;
 const ADDSUB_FUNCT3: u8 = 0x0; // Shared by ADD and SUB
 const ADD_FUNCT7: u32 = 0x00;
 const SUB_FUNCT7: u32 = 0x20;
+const SLL_FUNCT3: u8 = 0x1;
+const SLL_FUNCT7: u32 = 0x00;
 const XOR_FUNCT3: u8 = 0x4;
 const XOR_FUNCT7: u32 = 0x00;
 const OR_FUNCT3: u8 = 0x6;
@@ -38,6 +40,11 @@ pub enum Instruction {
     /// Subtracts the value in register `rs2` from `rs1` and stores the result in `rd`.
     /// Performs 32-bit arithmetic subtraction with overflow wrapping.
     Sub { rd: u8, rs1: u8, rs2: u8 },
+
+    /// Sll instruction
+    ///
+    /// Shifts the value in register `rs1` left by the shift amount held in the lower 5 bits of register `rs2` and stores the result in `rd`.
+    Sll { rd: u8, rs1: u8, rs2: u8 },
 
     /// Xor instruction
     ///
@@ -63,6 +70,9 @@ impl fmt::Display for Instruction {
             }
             Instruction::Sub { rd, rs1, rs2 } => {
                 write!(f, "sub x{}, x{}, x{}", rd, rs1, rs2)
+            }
+            Instruction::Sll { rd, rs1, rs2 } => {
+                write!(f, "sll x{}, x{}, x{}", rd, rs1, rs2)
             }
             Instruction::Xor { rd, rs1, rs2 } => {
                 write!(f, "xor x{}, x{}, x{}", rd, rs1, rs2)
@@ -100,6 +110,13 @@ impl Instruction {
                             Instruction::Add { rd, rs1, rs2 }
                         } else if funct7 == SUB_FUNCT7 {
                             Instruction::Sub { rd, rs1, rs2 }
+                        } else {
+                            Instruction::Unsupported(word)
+                        }
+                    }
+                    SLL_FUNCT3 => {
+                        if funct7 == SLL_FUNCT7 {
+                            Instruction::Sll { rd, rs1, rs2 }
                         } else {
                             Instruction::Unsupported(word)
                         }
