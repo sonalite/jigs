@@ -23,6 +23,9 @@ The project implements a RISC-V instruction decoder with:
 - Test with output: `cargo test -- --nocapture`
 - Run single test: `cargo test test_add_x1_x2_x3`
 - Code coverage: `cargo tarpaulin`
+- Format code: `cargo fmt`
+- Check formatting: `cargo fmt -- --check`
+- Lint code: `cargo clippy`
 
 ## RISC-V Implementation Details
 - Currently supports R-type instructions (register-to-register operations)
@@ -42,4 +45,4 @@ The project implements a RISC-V instruction decoder with:
 
 ## Code Style Conventions
 - File ordering: module docs → `mod` declarations → `use` statements → constants → types → implementations
-- Code must compile with no warnings (`cargo build` and `cargo test` should produce zero warnings)
+- Before committing: ensure `cargo build`, `cargo test`, `cargo fmt -- --check`, and `cargo clippy` produce no warnings
