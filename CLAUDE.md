@@ -50,6 +50,7 @@ The project implements a RISC-V instruction decoder with:
 - Before committing: ensure `cargo build`, `cargo test`, `cargo tarpaulin`, `cargo fmt -- --check`, and `cargo clippy` produce no warnings
 
 ## Git Commit Conventions
+- Always run `cargo fmt` immediately before committing to check for any formatting changes
 - Focus commit messages on the primary functionality (e.g., "Implement XOR instruction" not "Update tests and add XOR")
 - Ask for user confirmation before committing to ensure accuracy
 
