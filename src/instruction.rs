@@ -35,16 +35,31 @@ const IMM_B_10_5_SHIFT: u32 = 25;
 const IMM_B_4_1_MASK: u32 = 0xF00; // bits 11:8 -> imm[4:1]
 const IMM_B_4_1_SHIFT: u32 = 8;
 
+// J-type immediate masks and shifts for JAL
+// J-type immediate is encoded as: imm[20|10:1|11|19:12]|rd|opcode
+// The immediate represents a signed offset in multiples of 2 bytes
+const IMM_J_20_MASK: u32 = 0x80000000; // bit 31 -> imm[20]
+const IMM_J_20_SHIFT: u32 = 31;
+const IMM_J_19_12_MASK: u32 = 0xFF000; // bits 19:12 -> imm[19:12]
+const IMM_J_19_12_SHIFT: u32 = 12;
+const IMM_J_11_MASK: u32 = 0x100000; // bit 20 -> imm[11]
+const IMM_J_11_SHIFT: u32 = 20;
+const IMM_J_10_1_MASK: u32 = 0x7FE00000; // bits 30:21 -> imm[10:1]
+const IMM_J_10_1_SHIFT: u32 = 21;
+
 // Opcodes
 const REG_OPCODE: u32 = 0x33;
 const IMM_OPCODE: u32 = 0x13;
 const LOAD_OPCODE: u32 = 0x03;
 const STORE_OPCODE: u32 = 0x23;
 const BRANCH_OPCODE: u32 = 0x63;
+const JAL_OPCODE: u32 = 0x6F;
+const JALR_OPCODE: u32 = 0x67;
 
 // Function codes for I-type instructions
 const ADDI_FUNCT3: u8 = 0x0;
 const SLLI_FUNCT3: u8 = 0x1;
+const JALR_FUNCT3: u8 = 0x0; // JALR uses funct3 = 0x0
 const SLTI_FUNCT3: u8 = 0x2;
 const SLTIU_FUNCT3: u8 = 0x3;
 const XORI_FUNCT3: u8 = 0x4;
@@ -273,6 +288,18 @@ pub enum Instruction {
     /// The immediate is a signed offset in bytes.
     Bgeu { rs1: u8, rs2: u8, imm: i32 },
 
+    /// Jal instruction
+    ///
+    /// Jumps to `pc + imm` and stores the address of the next instruction (`pc + 4`) in register `rd`.
+    /// The immediate is a signed offset in bytes (must be even).
+    Jal { rd: u8, imm: i32 },
+
+    /// Jalr instruction
+    ///
+    /// Jumps to `(rs1 + imm) & ~1` and stores the address of the next instruction (`pc + 4`) in register `rd`.
+    /// The immediate is a signed 12-bit value.
+    Jalr { rd: u8, rs1: u8, imm: i32 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -380,6 +407,12 @@ impl fmt::Display for Instruction {
             }
             Instruction::Bgeu { rs1, rs2, imm } => {
                 write!(f, "bgeu x{}, x{}, {}", rs1, rs2, imm)
+            }
+            Instruction::Jal { rd, imm } => {
+                write!(f, "jal x{}, {}", rd, imm)
+            }
+            Instruction::Jalr { rd, rs1, imm } => {
+                write!(f, "jalr x{}, {}(x{})", rd, imm, rs1)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -601,6 +634,53 @@ impl Instruction {
                     BLTU_FUNCT3 => Instruction::Bltu { rs1, rs2, imm },
                     BGEU_FUNCT3 => Instruction::Bgeu { rs1, rs2, imm },
                     _ => Instruction::Unsupported(word),
+                }
+            }
+            JAL_OPCODE => {
+                // JAL is J-type instruction
+                let rd = ((word & RD_MASK) >> RD_SHIFT) as u8;
+
+                // J-type immediate reconstruction
+                // The immediate is encoded in a scrambled format:
+                // inst[31] = imm[20], inst[30:21] = imm[10:1], inst[20] = imm[11], inst[19:12] = imm[19:12]
+                let bit_20 = (word & IMM_J_20_MASK) >> IMM_J_20_SHIFT;
+                let bits_19_12 = (word & IMM_J_19_12_MASK) >> IMM_J_19_12_SHIFT;
+                let bit_11 = (word & IMM_J_11_MASK) >> IMM_J_11_SHIFT;
+                let bits_10_1 = (word & IMM_J_10_1_MASK) >> IMM_J_10_1_SHIFT;
+
+                // Reconstruct the immediate value (21 bits, with bit 0 always 0)
+                let imm_raw =
+                    (bit_20 << 20) | (bits_19_12 << 12) | (bit_11 << 11) | (bits_10_1 << 1);
+
+                // Sign-extend from 21 bits to 32 bits
+                let imm = if imm_raw & 0x100000 != 0 {
+                    // Sign bit is set, sign-extend
+                    (imm_raw | 0xFFE00000) as i32
+                } else {
+                    imm_raw as i32
+                };
+
+                Instruction::Jal { rd, imm }
+            }
+            JALR_OPCODE => {
+                // JALR is I-type instruction with funct3 = 0
+                let funct3 = (((word & FUNCT3_MASK) >> FUNCT3_SHIFT) & 0x7) as u8;
+                let rd = ((word & RD_MASK) >> RD_SHIFT) as u8;
+                let rs1 = ((word & RS1_MASK) >> RS1_SHIFT) as u8;
+
+                // Sign-extend the 12-bit immediate
+                let imm_raw = (word & IMM_I_MASK) >> IMM_I_SHIFT;
+                let imm = if imm_raw & 0x800 != 0 {
+                    // Sign bit is set, sign-extend
+                    (imm_raw | 0xFFFFF000) as i32
+                } else {
+                    imm_raw as i32
+                };
+
+                if funct3 == JALR_FUNCT3 {
+                    Instruction::Jalr { rd, rs1, imm }
+                } else {
+                    Instruction::Unsupported(word)
                 }
             }
             _ => Instruction::Unsupported(word),

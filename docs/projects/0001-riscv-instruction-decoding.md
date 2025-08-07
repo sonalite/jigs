@@ -56,9 +56,9 @@ Implementation of RISC-V 32-bit instruction decoder with support for all RV32IM 
 - ✅ BLTU (branch less than unsigned)
 - ✅ BGEU (branch greater equal unsigned)
 
-### Jump Instructions 📋
-- 📋 JAL (jump and link)
-- 📋 JALR (jump and link register)
+### Jump Instructions ✅
+- ✅ JAL (jump and link)
+- ✅ JALR (jump and link register)
 
 ### U-Type Instructions 📋
 - 📋 LUI (load upper immediate)
