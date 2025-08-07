@@ -31,6 +31,8 @@ const SRL_FUNCT7: u32 = 0x00;
 const SRA_FUNCT7: u32 = 0x20;
 const SLT_FUNCT3: u8 = 0x2;
 const SLT_FUNCT7: u32 = 0x00;
+const SLTU_FUNCT3: u8 = 0x3;
+const SLTU_FUNCT7: u32 = 0x00;
 
 /// RISC-V instruction representation for 32-bit IM
 pub enum Instruction {
@@ -78,6 +80,11 @@ pub enum Instruction {
     /// Sets `rd` to 1 if the signed value in register `rs1` is less than the signed value in register `rs2`, otherwise sets `rd` to 0.
     Slt { rd: u8, rs1: u8, rs2: u8 },
 
+    /// Sltu instruction
+    ///
+    /// Sets `rd` to 1 if the unsigned value in register `rs1` is less than the unsigned value in register `rs2`, otherwise sets `rd` to 0.
+    Sltu { rd: u8, rs1: u8, rs2: u8 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -110,6 +117,9 @@ impl fmt::Display for Instruction {
             }
             Instruction::Slt { rd, rs1, rs2 } => {
                 write!(f, "slt x{}, x{}, x{}", rd, rs1, rs2)
+            }
+            Instruction::Sltu { rd, rs1, rs2 } => {
+                write!(f, "sltu x{}, x{}, x{}", rd, rs1, rs2)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -155,6 +165,13 @@ impl Instruction {
                     SLT_FUNCT3 => {
                         if funct7 == SLT_FUNCT7 {
                             Instruction::Slt { rd, rs1, rs2 }
+                        } else {
+                            Instruction::Unsupported(word)
+                        }
+                    }
+                    SLTU_FUNCT3 => {
+                        if funct7 == SLTU_FUNCT7 {
+                            Instruction::Sltu { rd, rs1, rs2 }
                         } else {
                             Instruction::Unsupported(word)
                         }
