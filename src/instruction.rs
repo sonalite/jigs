@@ -26,6 +26,7 @@ const ADDI_FUNCT3: u8 = 0x0;
 const SLTI_FUNCT3: u8 = 0x2;
 const SLTIU_FUNCT3: u8 = 0x3;
 const XORI_FUNCT3: u8 = 0x4;
+const ORI_FUNCT3: u8 = 0x6;
 
 // Function codes for R-type instructions
 const ADD_SUB_FUNCT3: u8 = 0x0; // Shared by ADD and SUB
@@ -125,6 +126,11 @@ pub enum Instruction {
     /// Performs bitwise XOR between the value in register `rs1` and the sign-extended 12-bit immediate, stores the result in `rd`.
     Xori { rd: u8, rs1: u8, imm: i32 },
 
+    /// Ori instruction
+    ///
+    /// Performs bitwise OR between the value in register `rs1` and the sign-extended 12-bit immediate, stores the result in `rd`.
+    Ori { rd: u8, rs1: u8, imm: i32 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -175,6 +181,9 @@ impl fmt::Display for Instruction {
             }
             Instruction::Xori { rd, rs1, imm } => {
                 write!(f, "xori x{}, x{}, {}", rd, rs1, imm)
+            }
+            Instruction::Ori { rd, rs1, imm } => {
+                write!(f, "ori x{}, x{}, {}", rd, rs1, imm)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -286,6 +295,7 @@ impl Instruction {
                     SLTI_FUNCT3 => Instruction::Slti { rd, rs1, imm },
                     SLTIU_FUNCT3 => Instruction::Sltiu { rd, rs1, imm },
                     XORI_FUNCT3 => Instruction::Xori { rd, rs1, imm },
+                    ORI_FUNCT3 => Instruction::Ori { rd, rs1, imm },
                     _ => Instruction::Unsupported(word),
                 }
             }
