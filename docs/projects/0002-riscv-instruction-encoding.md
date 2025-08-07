@@ -6,9 +6,8 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 ## Tasks
 
 ### Instruction Infrastructure 📋
-- 📋 Add encode() method to Instruction enum
-- 📋 Create encode module with helper functions for different instruction formats
-- 📋 Implement field packing functions for R, I, S, B, U, and J formats
+- 📋 Add encode() method to Instruction enum (single function like decode for maximum performance)
+- 📋 Implement field packing logic for R, I, S, B, U, and J formats within encode()
 - 📋 Add comprehensive test suite structure (encode tests)
 
 ### R-Type Instruction Encoding 📋
@@ -77,29 +76,30 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - 📋 REMU instruction
 
 ### Testing & Validation 📋
+- 📋 Modify existing decode tests to be bidirectional (test both decode and encode)
+- 📋 Create helper function for bidirectional testing that all tests use
 - 📋 Round-trip tests (encode then decode should match original)
 - 📋 Verify encoding matches RISC-V specification test vectors
 - 📋 Edge case testing for immediate value ranges
 - 📋 100% code coverage maintained
 
-### Integration 📋
+### Documentation 📋
 - 📋 Add encoding examples to documentation
-- 📋 Create helper methods for common encoding patterns
-- 📋 Performance optimization for encoding operations
 
 ## Design Considerations
 
 ### Encoding Strategy
 - Each instruction variant implements its own encoding logic
 - Immediate values are validated to ensure they fit within bit width constraints
-- Sign extension is handled appropriately for each instruction format
 
 ### Error Handling
 - Return Result<u32, EncodeError> to handle invalid immediate values
 - Provide clear error messages for out-of-range immediates
-- Consider panic vs Result for internal invariant violations
+- Always use Result for error handling, never panic
 
 ### Testing Approach
+- Modify existing decode tests to test bidirectionally using a shared helper function
+- The helper should: decode the instruction word, verify it matches expected, encode it back, verify it matches original word
 - Every encoded instruction should decode back to the original
 - Test boundary values for all immediate fields
 - Verify against known instruction encodings from RISC-V spec

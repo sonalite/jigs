@@ -48,6 +48,7 @@ The project implements a RISC-V instruction decoder with:
 ## Code Style Conventions
 - File ordering: module docs → `mod` declarations → `use` statements → constants → types → implementations
 - Before committing: ensure `cargo build`, `cargo test`, `cargo tarpaulin`, `cargo fmt -- --check`, and `cargo clippy` produce no warnings
+- Error handling: Always use Result for error handling, never panic
 
 ## Git Commit Conventions
 - Always run `cargo fmt` immediately before committing to check for any formatting changes
