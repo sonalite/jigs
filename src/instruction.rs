@@ -23,6 +23,7 @@ const IMM_OPCODE: u32 = 0x13;
 
 // Function codes for I-type instructions
 const ADDI_FUNCT3: u8 = 0x0;
+const SLLI_FUNCT3: u8 = 0x1;
 const SLTI_FUNCT3: u8 = 0x2;
 const SLTIU_FUNCT3: u8 = 0x3;
 const XORI_FUNCT3: u8 = 0x4;
@@ -137,6 +138,11 @@ pub enum Instruction {
     /// Performs bitwise AND between the value in register `rs1` and the sign-extended 12-bit immediate, stores the result in `rd`.
     Andi { rd: u8, rs1: u8, imm: i32 },
 
+    /// Slli instruction
+    ///
+    /// Shifts the value in register `rs1` left by the immediate shift amount (lower 5 bits) and stores the result in `rd`.
+    Slli { rd: u8, rs1: u8, shamt: u8 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -193,6 +199,9 @@ impl fmt::Display for Instruction {
             }
             Instruction::Andi { rd, rs1, imm } => {
                 write!(f, "andi x{}, x{}, {}", rd, rs1, imm)
+            }
+            Instruction::Slli { rd, rs1, shamt } => {
+                write!(f, "slli x{}, x{}, {}", rd, rs1, shamt)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -301,6 +310,17 @@ impl Instruction {
 
                 match funct3 {
                     ADDI_FUNCT3 => Instruction::Addi { rd, rs1, imm },
+                    SLLI_FUNCT3 => {
+                        // For SLLI, the immediate encodes the shift amount in lower 5 bits
+                        // and the upper 7 bits must be 0x00
+                        let shamt = (imm_raw & 0x1F) as u8;
+                        let upper_bits = (imm_raw >> 5) & 0x7F;
+                        if upper_bits == 0x00 {
+                            Instruction::Slli { rd, rs1, shamt }
+                        } else {
+                            Instruction::Unsupported(word)
+                        }
+                    }
                     SLTI_FUNCT3 => Instruction::Slti { rd, rs1, imm },
                     SLTIU_FUNCT3 => Instruction::Sltiu { rd, rs1, imm },
                     XORI_FUNCT3 => Instruction::Xori { rd, rs1, imm },
