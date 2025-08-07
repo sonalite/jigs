@@ -1,6 +1,7 @@
 mod add;
 mod or;
 mod sll;
+mod slt;
 mod sra;
 mod srl;
 mod sub;

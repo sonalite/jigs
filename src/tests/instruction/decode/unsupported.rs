@@ -32,13 +32,13 @@ fn invalid_funct7() {
 #[test]
 fn invalid_funct3() {
     // Valid opcode, but invalid funct3
-    // rd=1, rs1=2, rs2=3, funct3=0x2 (invalid), funct7=0x00, opcode=0x33
-    let instruction_word = 0x003120B3; // 0000000 00011 00010 010 00001 0110011
+    // rd=1, rs1=2, rs2=3, funct3=0x3 (invalid), funct7=0x00, opcode=0x33
+    let instruction_word = 0x003130B3; // 0000000 00011 00010 011 00001 0110011
     let instruction = Instruction::decode(instruction_word);
 
     match instruction {
         Instruction::Unsupported(word) => {
-            assert_eq!(word, 0x003120B3);
+            assert_eq!(word, 0x003130B3);
         }
         _ => panic!("Expected Unsupported instruction"),
     }

@@ -17,7 +17,7 @@ const FUNCT7_SHIFT: u32 = 25;
 const REG_OPCODE: u32 = 0x33;
 
 // Function codes for R-type instructions
-const ADDSUB_FUNCT3: u8 = 0x0; // Shared by ADD and SUB
+const ADD_SUB_FUNCT3: u8 = 0x0; // Shared by ADD and SUB
 const ADD_FUNCT7: u32 = 0x00;
 const SUB_FUNCT7: u32 = 0x20;
 const SLL_FUNCT3: u8 = 0x1;
@@ -29,6 +29,8 @@ const OR_FUNCT7: u32 = 0x00;
 const SRL_SRA_FUNCT3: u8 = 0x5; // Shared by SRL and SRA
 const SRL_FUNCT7: u32 = 0x00;
 const SRA_FUNCT7: u32 = 0x20;
+const SLT_FUNCT3: u8 = 0x2;
+const SLT_FUNCT7: u32 = 0x00;
 
 /// RISC-V instruction representation for 32-bit IM
 pub enum Instruction {
@@ -71,6 +73,11 @@ pub enum Instruction {
     /// Performs arithmetic right shift (sign-extend).
     Sra { rd: u8, rs1: u8, rs2: u8 },
 
+    /// Slt instruction
+    ///
+    /// Sets `rd` to 1 if the signed value in register `rs1` is less than the signed value in register `rs2`, otherwise sets `rd` to 0.
+    Slt { rd: u8, rs1: u8, rs2: u8 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -101,6 +108,9 @@ impl fmt::Display for Instruction {
             Instruction::Sra { rd, rs1, rs2 } => {
                 write!(f, "sra x{}, x{}, x{}", rd, rs1, rs2)
             }
+            Instruction::Slt { rd, rs1, rs2 } => {
+                write!(f, "slt x{}, x{}, x{}", rd, rs1, rs2)
+            }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
             }
@@ -126,7 +136,7 @@ impl Instruction {
                 let rs2 = ((word & RS2_MASK) >> RS2_SHIFT) as u8;
 
                 match funct3 {
-                    ADDSUB_FUNCT3 => {
+                    ADD_SUB_FUNCT3 => {
                         if funct7 == ADD_FUNCT7 {
                             Instruction::Add { rd, rs1, rs2 }
                         } else if funct7 == SUB_FUNCT7 {
@@ -138,6 +148,13 @@ impl Instruction {
                     SLL_FUNCT3 => {
                         if funct7 == SLL_FUNCT7 {
                             Instruction::Sll { rd, rs1, rs2 }
+                        } else {
+                            Instruction::Unsupported(word)
+                        }
+                    }
+                    SLT_FUNCT3 => {
+                        if funct7 == SLT_FUNCT7 {
+                            Instruction::Slt { rd, rs1, rs2 }
                         } else {
                             Instruction::Unsupported(word)
                         }
