@@ -1,12 +1,3 @@
-mod add;
-mod addi;
-mod and;
-mod or;
-mod sll;
-mod slt;
-mod sltu;
-mod sra;
-mod srl;
-mod sub;
+mod immediate;
+mod register;
 mod unsupported;
-mod xor;
