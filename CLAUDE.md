@@ -43,6 +43,7 @@ The project implements a RISC-V instruction decoder with:
 - For small test suites: use a single file (e.g., `src/tests/feature.rs`)
 - For large test suites: create a folder with separate files organized by feature (e.g., `src/tests/instruction/decode/add.rs`, `src/tests/instruction/decode/sub.rs`)
 - Test names should be concise and NOT include "test" or the subject being tested, as this is implied by the module structure (e.g., in `tests/instruction/decode/add.rs`, use `fn basic()` not `fn test_add_basic()`)
+- When implementing similar functionality to existing features, review existing tests to ensure consistent test coverage (e.g., if ADD has tests for basic, zero_registers, max_registers, and different_registers, similar instructions should have the same test cases)
 
 ## Code Style Conventions
 - File ordering: module docs → `mod` declarations → `use` statements → constants → types → implementations
