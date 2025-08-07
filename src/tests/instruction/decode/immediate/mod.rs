@@ -1,1 +1,2 @@
 mod addi;
+mod slti;

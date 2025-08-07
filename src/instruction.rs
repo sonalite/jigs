@@ -23,6 +23,7 @@ const IMM_OPCODE: u32 = 0x13;
 
 // Function codes for I-type instructions
 const ADDI_FUNCT3: u8 = 0x0;
+const SLTI_FUNCT3: u8 = 0x2;
 
 // Function codes for R-type instructions
 const ADD_SUB_FUNCT3: u8 = 0x0; // Shared by ADD and SUB
@@ -106,6 +107,11 @@ pub enum Instruction {
     /// Performs 32-bit arithmetic addition with overflow wrapping.
     Addi { rd: u8, rs1: u8, imm: i32 },
 
+    /// Slti instruction
+    ///
+    /// Sets `rd` to 1 if the signed value in register `rs1` is less than the sign-extended 12-bit immediate, otherwise sets `rd` to 0.
+    Slti { rd: u8, rs1: u8, imm: i32 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -147,6 +153,9 @@ impl fmt::Display for Instruction {
             }
             Instruction::Addi { rd, rs1, imm } => {
                 write!(f, "addi x{}, x{}, {}", rd, rs1, imm)
+            }
+            Instruction::Slti { rd, rs1, imm } => {
+                write!(f, "slti x{}, x{}, {}", rd, rs1, imm)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -255,6 +264,7 @@ impl Instruction {
 
                 match funct3 {
                     ADDI_FUNCT3 => Instruction::Addi { rd, rs1, imm },
+                    SLTI_FUNCT3 => Instruction::Slti { rd, rs1, imm },
                     _ => Instruction::Unsupported(word),
                 }
             }
