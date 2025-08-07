@@ -48,13 +48,13 @@ Implementation of RISC-V 32-bit instruction decoder with support for all RV32IM 
 - ✅ SH (store halfword)
 - ✅ SW (store word)
 
-### Branch Instructions 📋
-- 📋 BEQ (branch equal)
-- 📋 BNE (branch not equal)
-- 📋 BLT (branch less than)
-- 📋 BGE (branch greater equal)
-- 📋 BLTU (branch less than unsigned)
-- 📋 BGEU (branch greater equal unsigned)
+### Branch Instructions ✅
+- ✅ BEQ (branch equal)
+- ✅ BNE (branch not equal)
+- ✅ BLT (branch less than)
+- ✅ BGE (branch greater equal)
+- ✅ BLTU (branch less than unsigned)
+- ✅ BGEU (branch greater equal unsigned)
 
 ### Jump Instructions 📋
 - 📋 JAL (jump and link)

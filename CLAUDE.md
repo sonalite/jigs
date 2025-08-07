@@ -13,11 +13,12 @@ Currently implements decoding and display formatting for 32-bit RISC-V instructi
 ## Architecture
 The project implements a RISC-V instruction decoder with:
 - **src/instruction.rs**: Core instruction representation and decoding logic
-  - `Instruction` enum for different instruction types (currently Add and Unsupported)
+  - `Instruction` enum for different instruction types (R-type, I-type, S-type, B-type, and Unsupported)
   - Decode method that extracts fields from 32-bit instruction words using bitmasking
   - Display trait implementation for assembly-style output
+  - Supports: arithmetic ops, logical ops, shifts, loads, stores, and branches
 - **src/tests/**: Comprehensive test suite organized by functionality
-  - `decode/`: Tests for instruction decoding
+  - `decode/`: Tests for instruction decoding (register, immediate, load, store, branch)
   - `display/`: Tests for instruction display formatting
 
 ## Commands
@@ -31,12 +32,6 @@ The project implements a RISC-V instruction decoder with:
 - Format code: `cargo fmt`
 - Check formatting: `cargo fmt -- --check`
 - Lint code: `cargo clippy`
-
-## RISC-V Implementation Details
-- Currently supports R-type instructions (register-to-register operations)
-- Instruction word format follows standard RISC-V 32-bit encoding
-- Field extraction uses bit masks and shifts defined as constants
-- Register addresses use x0-x31 notation in display output
 
 ## Code Coverage Requirements
 - New code should have test coverage as close to 100% as possible

@@ -23,11 +23,24 @@ const IMM_S_11_5_SHIFT: u32 = 25;
 const IMM_S_4_0_MASK: u32 = 0xF80;
 const IMM_S_4_0_SHIFT: u32 = 7;
 
+// B-type immediate masks and shifts
+// B-type immediate is encoded as: imm[12|10:5]|rs2|rs1|funct3|imm[4:1|11]|opcode
+// The immediate represents a signed offset in multiples of 2 bytes
+const IMM_B_12_MASK: u32 = 0x80000000; // bit 31 -> imm[12]
+const IMM_B_12_SHIFT: u32 = 31;
+const IMM_B_11_MASK: u32 = 0x80; // bit 7 -> imm[11]
+const IMM_B_11_SHIFT: u32 = 7;
+const IMM_B_10_5_MASK: u32 = 0x7E000000; // bits 30:25 -> imm[10:5]
+const IMM_B_10_5_SHIFT: u32 = 25;
+const IMM_B_4_1_MASK: u32 = 0xF00; // bits 11:8 -> imm[4:1]
+const IMM_B_4_1_SHIFT: u32 = 8;
+
 // Opcodes
 const REG_OPCODE: u32 = 0x33;
 const IMM_OPCODE: u32 = 0x13;
 const LOAD_OPCODE: u32 = 0x03;
 const STORE_OPCODE: u32 = 0x23;
+const BRANCH_OPCODE: u32 = 0x63;
 
 // Function codes for I-type instructions
 const ADDI_FUNCT3: u8 = 0x0;
@@ -50,6 +63,14 @@ const LHU_FUNCT3: u8 = 0x5;
 const SB_FUNCT3: u8 = 0x0;
 const SH_FUNCT3: u8 = 0x1;
 const SW_FUNCT3: u8 = 0x2;
+
+// Function codes for Branch instructions
+const BEQ_FUNCT3: u8 = 0x0;
+const BNE_FUNCT3: u8 = 0x1;
+const BLT_FUNCT3: u8 = 0x4;
+const BGE_FUNCT3: u8 = 0x5;
+const BLTU_FUNCT3: u8 = 0x6;
+const BGEU_FUNCT3: u8 = 0x7;
 
 // Function codes for R-type instructions
 const ADD_SUB_FUNCT3: u8 = 0x0; // Shared by ADD and SUB
@@ -216,6 +237,42 @@ pub enum Instruction {
     /// Stores a word (32 bits) from register `rs2` to memory at address `rs1 + imm`.
     Sw { rs1: u8, rs2: u8, imm: i32 },
 
+    /// Beq instruction
+    ///
+    /// Branches to `pc + imm` if the values in registers `rs1` and `rs2` are equal.
+    /// The immediate is a signed offset in bytes.
+    Beq { rs1: u8, rs2: u8, imm: i32 },
+
+    /// Bne instruction
+    ///
+    /// Branches to `pc + imm` if the values in registers `rs1` and `rs2` are not equal.
+    /// The immediate is a signed offset in bytes.
+    Bne { rs1: u8, rs2: u8, imm: i32 },
+
+    /// Blt instruction
+    ///
+    /// Branches to `pc + imm` if the signed value in register `rs1` is less than the signed value in register `rs2`.
+    /// The immediate is a signed offset in bytes.
+    Blt { rs1: u8, rs2: u8, imm: i32 },
+
+    /// Bge instruction
+    ///
+    /// Branches to `pc + imm` if the signed value in register `rs1` is greater than or equal to the signed value in register `rs2`.
+    /// The immediate is a signed offset in bytes.
+    Bge { rs1: u8, rs2: u8, imm: i32 },
+
+    /// Bltu instruction
+    ///
+    /// Branches to `pc + imm` if the unsigned value in register `rs1` is less than the unsigned value in register `rs2`.
+    /// The immediate is a signed offset in bytes.
+    Bltu { rs1: u8, rs2: u8, imm: i32 },
+
+    /// Bgeu instruction
+    ///
+    /// Branches to `pc + imm` if the unsigned value in register `rs1` is greater than or equal to the unsigned value in register `rs2`.
+    /// The immediate is a signed offset in bytes.
+    Bgeu { rs1: u8, rs2: u8, imm: i32 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -305,6 +362,24 @@ impl fmt::Display for Instruction {
             }
             Instruction::Sw { rs1, rs2, imm } => {
                 write!(f, "sw x{}, {}(x{})", rs2, imm, rs1)
+            }
+            Instruction::Beq { rs1, rs2, imm } => {
+                write!(f, "beq x{}, x{}, {}", rs1, rs2, imm)
+            }
+            Instruction::Bne { rs1, rs2, imm } => {
+                write!(f, "bne x{}, x{}, {}", rs1, rs2, imm)
+            }
+            Instruction::Blt { rs1, rs2, imm } => {
+                write!(f, "blt x{}, x{}, {}", rs1, rs2, imm)
+            }
+            Instruction::Bge { rs1, rs2, imm } => {
+                write!(f, "bge x{}, x{}, {}", rs1, rs2, imm)
+            }
+            Instruction::Bltu { rs1, rs2, imm } => {
+                write!(f, "bltu x{}, x{}, {}", rs1, rs2, imm)
+            }
+            Instruction::Bgeu { rs1, rs2, imm } => {
+                write!(f, "bgeu x{}, x{}, {}", rs1, rs2, imm)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -491,6 +566,40 @@ impl Instruction {
                     SB_FUNCT3 => Instruction::Sb { rs1, rs2, imm },
                     SH_FUNCT3 => Instruction::Sh { rs1, rs2, imm },
                     SW_FUNCT3 => Instruction::Sw { rs1, rs2, imm },
+                    _ => Instruction::Unsupported(word),
+                }
+            }
+            BRANCH_OPCODE => {
+                let funct3 = (((word & FUNCT3_MASK) >> FUNCT3_SHIFT) & 0x7) as u8;
+                let rs1 = ((word & RS1_MASK) >> RS1_SHIFT) as u8;
+                let rs2 = ((word & RS2_MASK) >> RS2_SHIFT) as u8;
+
+                // B-type immediate reconstruction
+                // The immediate is encoded in a scrambled format:
+                // inst[31] = imm[12], inst[30:25] = imm[10:5], inst[11:8] = imm[4:1], inst[7] = imm[11]
+                let bit_12 = (word & IMM_B_12_MASK) >> IMM_B_12_SHIFT;
+                let bit_11 = (word & IMM_B_11_MASK) >> IMM_B_11_SHIFT;
+                let bits_10_5 = (word & IMM_B_10_5_MASK) >> IMM_B_10_5_SHIFT;
+                let bits_4_1 = (word & IMM_B_4_1_MASK) >> IMM_B_4_1_SHIFT;
+
+                // Reconstruct the immediate value (13 bits, with bit 0 always 0)
+                let imm_raw = (bit_12 << 12) | (bit_11 << 11) | (bits_10_5 << 5) | (bits_4_1 << 1);
+
+                // Sign-extend from 13 bits to 32 bits
+                let imm = if imm_raw & 0x1000 != 0 {
+                    // Sign bit is set, sign-extend
+                    (imm_raw | 0xFFFFE000) as i32
+                } else {
+                    imm_raw as i32
+                };
+
+                match funct3 {
+                    BEQ_FUNCT3 => Instruction::Beq { rs1, rs2, imm },
+                    BNE_FUNCT3 => Instruction::Bne { rs1, rs2, imm },
+                    BLT_FUNCT3 => Instruction::Blt { rs1, rs2, imm },
+                    BGE_FUNCT3 => Instruction::Bge { rs1, rs2, imm },
+                    BLTU_FUNCT3 => Instruction::Bltu { rs1, rs2, imm },
+                    BGEU_FUNCT3 => Instruction::Bgeu { rs1, rs2, imm },
                     _ => Instruction::Unsupported(word),
                 }
             }
