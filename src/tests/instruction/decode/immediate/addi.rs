@@ -101,3 +101,18 @@ fn max_negative_immediate() {
         _ => panic!("Expected Addi instruction"),
     }
 }
+
+#[test]
+fn invalid_funct3() {
+    // I-type instruction with invalid funct3 (0x1 instead of 0x0 for ADDI)
+    // rd=1, rs1=2, imm=10, funct3=0x1 (invalid), opcode=0x13
+    let instruction_word = 0x00A11093; // 000000001010 00010 001 00001 0010011
+    let instruction = Instruction::decode(instruction_word);
+
+    match instruction {
+        Instruction::Unsupported(word) => {
+            assert_eq!(word, 0x00A11093);
+        }
+        _ => panic!("Expected Unsupported instruction for invalid funct3"),
+    }
+}
