@@ -89,6 +89,8 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 
 ### Documentation 📋
 - 📋 Add encoding examples to documentation
+- 📋 Update module-level documentation in src/instruction.rs to reflect encoding capability
+- 📋 Update CLAUDE.md to document encoding infrastructure and conventions
 
 ## Implementation Notes
 
