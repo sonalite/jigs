@@ -9,4 +9,4 @@ pub mod instruction;
 #[cfg(test)]
 mod tests;
 
-pub use instruction::Instruction;
+pub use instruction::{EncodeError, Instruction};

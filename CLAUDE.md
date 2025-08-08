@@ -47,10 +47,14 @@ The project is structured as a Rust library with an example binary:
 - For large test suites: create a folder with separate files organized by feature (e.g., `src/tests/instruction/decode/add.rs`, `src/tests/instruction/decode/sub.rs`)
 - Test names should be concise and NOT include "test" or the subject being tested, as this is implied by the module structure (e.g., in `tests/instruction/decode/add.rs`, use `fn basic()` not `fn test_add_basic()`)
 - When implementing similar functionality to existing features, review existing tests to ensure consistent test coverage (e.g., if ADD has tests for basic, zero_registers, max_registers, and different_registers, similar instructions should have the same test cases)
+- Test formatting: Tests under 10 lines should have no blank lines within the test body for conciseness
 
 ## Code Style Conventions
 - File ordering: module docs → `mod` declarations → `use` statements → constants → types → implementations
 - Module visibility: Only mark modules as public (`pub mod`) if their contents are actually used elsewhere. Test modules should generally use `mod` not `pub mod`
+- Use statements: Combine imports from the same crate to minimize use statements. For example, prefer `use crate::{EncodeError, Instruction};` over separate `use crate::EncodeError;` and `use crate::Instruction;` statements
+- File naming: Prefer single-word names for files and modules when possible (e.g., `unimplemented.rs` instead of `not_implemented.rs`, `bounds` instead of `bounds_checking`)
+- **VERY IMPORTANT**: Always run `cargo fmt` and `cargo clippy` as the final step before finishing any work to ensure code formatting and linting standards are met
 - Before committing: ensure `cargo build`, `cargo test`, `cargo test --doc`, `cargo tarpaulin`, `cargo fmt -- --check`, and `cargo clippy` produce no warnings
 - Documentation: Keep all module-level documentation up-to-date, including examples in doc comments
 - Error handling: Always use Result for error handling, never panic

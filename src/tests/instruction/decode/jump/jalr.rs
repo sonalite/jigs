@@ -6,15 +6,14 @@ fn basic() {
     // rd=1, rs1=2, imm=8, funct3=0x0, opcode=0x67
     let instruction_word = 0x008100E7; // 000000001000 00010 000 00001 1100111
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Jalr { rd, rs1, imm } => {
-            assert_eq!(rd, 1);
-            assert_eq!(rs1, 2);
-            assert_eq!(imm, 8);
+    assert_eq!(
+        instruction,
+        Instruction::Jalr {
+            rd: 1,
+            rs1: 2,
+            imm: 8
         }
-        _ => panic!("Expected Jalr instruction"),
-    }
+    );
 }
 
 #[test]
@@ -23,15 +22,14 @@ fn zero_registers() {
     // rd=0, rs1=0, imm=0, funct3=0x0, opcode=0x67
     let instruction_word = 0x00000067;
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Jalr { rd, rs1, imm } => {
-            assert_eq!(rd, 0);
-            assert_eq!(rs1, 0);
-            assert_eq!(imm, 0);
+    assert_eq!(
+        instruction,
+        Instruction::Jalr {
+            rd: 0,
+            rs1: 0,
+            imm: 0
         }
-        _ => panic!("Expected Jalr instruction"),
-    }
+    );
 }
 
 #[test]
@@ -40,15 +38,14 @@ fn max_registers() {
     // rd=31, rs1=31, imm=16, funct3=0x0, opcode=0x67
     let instruction_word = 0x010F8FE7; // 000000010000 11111 000 11111 1100111
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Jalr { rd, rs1, imm } => {
-            assert_eq!(rd, 31);
-            assert_eq!(rs1, 31);
-            assert_eq!(imm, 16);
+    assert_eq!(
+        instruction,
+        Instruction::Jalr {
+            rd: 31,
+            rs1: 31,
+            imm: 16
         }
-        _ => panic!("Expected Jalr instruction"),
-    }
+    );
 }
 
 #[test]
@@ -58,15 +55,14 @@ fn negative_offset() {
     // -8 in 12 bits = 0xFF8
     let instruction_word = 0xFF8302E7; // 111111111000 00110 000 00101 1100111
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Jalr { rd, rs1, imm } => {
-            assert_eq!(rd, 5);
-            assert_eq!(rs1, 6);
-            assert_eq!(imm, -8);
+    assert_eq!(
+        instruction,
+        Instruction::Jalr {
+            rd: 5,
+            rs1: 6,
+            imm: -8
         }
-        _ => panic!("Expected Jalr instruction"),
-    }
+    );
 }
 
 #[test]
@@ -76,15 +72,14 @@ fn large_positive_offset() {
     // 2047 = 0x7FF
     let instruction_word = 0x7FF58567; // 011111111111 01011 000 01010 1100111
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Jalr { rd, rs1, imm } => {
-            assert_eq!(rd, 10);
-            assert_eq!(rs1, 11);
-            assert_eq!(imm, 2047);
+    assert_eq!(
+        instruction,
+        Instruction::Jalr {
+            rd: 10,
+            rs1: 11,
+            imm: 2047
         }
-        _ => panic!("Expected Jalr instruction"),
-    }
+    );
 }
 
 #[test]
@@ -94,15 +89,14 @@ fn large_negative_offset() {
     // -2048 = 0x800 in 12 bits
     let instruction_word = 0x800807E7; // 100000000000 10000 000 01111 1100111
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Jalr { rd, rs1, imm } => {
-            assert_eq!(rd, 15);
-            assert_eq!(rs1, 16);
-            assert_eq!(imm, -2048);
+    assert_eq!(
+        instruction,
+        Instruction::Jalr {
+            rd: 15,
+            rs1: 16,
+            imm: -2048
         }
-        _ => panic!("Expected Jalr instruction"),
-    }
+    );
 }
 
 #[test]
@@ -111,15 +105,14 @@ fn different_registers() {
     // rd=20, rs1=25, imm=64, funct3=0x0, opcode=0x67
     let instruction_word = 0x040C8A67; // 000001000000 11001 000 10100 1100111
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Jalr { rd, rs1, imm } => {
-            assert_eq!(rd, 20);
-            assert_eq!(rs1, 25);
-            assert_eq!(imm, 64);
+    assert_eq!(
+        instruction,
+        Instruction::Jalr {
+            rd: 20,
+            rs1: 25,
+            imm: 64
         }
-        _ => panic!("Expected Jalr instruction"),
-    }
+    );
 }
 
 #[test]
@@ -128,9 +121,5 @@ fn wrong_funct3() {
     // rd=1, rs1=2, imm=8, funct3=0x1 (wrong), opcode=0x67
     let instruction_word = 0x008110E7; // 000000001000 00010 001 00001 1100111
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Unsupported(_) => {}
-        _ => panic!("Expected Unsupported instruction for wrong funct3"),
-    }
+    assert_eq!(instruction, Instruction::Unsupported(instruction_word));
 }

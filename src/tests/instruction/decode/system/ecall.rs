@@ -6,11 +6,7 @@ fn basic() {
     // Full encoding: 0x00000073
     let instruction_word = 0x00000073;
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Ecall => {}
-        _ => panic!("Expected Ecall instruction"),
-    }
+    assert_eq!(instruction, Instruction::Ecall);
 }
 
 #[test]
@@ -18,11 +14,7 @@ fn verify_exact_encoding() {
     // ECALL must be exactly 0x00000073
     let instruction_word = 0x00000073;
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Ecall => {}
-        _ => panic!("Expected Ecall instruction"),
-    }
+    assert_eq!(instruction, Instruction::Ecall);
 }
 
 #[test]
@@ -31,11 +23,7 @@ fn invalid_with_nonzero_rd() {
     // Setting rd = 1 (bits 11:7)
     let instruction_word = 0x000000F3; // rd = 1
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Unsupported(_) => {}
-        _ => panic!("Expected Unsupported instruction when rd != 0"),
-    }
+    assert_eq!(instruction, Instruction::Unsupported(instruction_word));
 }
 
 #[test]
@@ -44,11 +32,7 @@ fn invalid_with_nonzero_rs1() {
     // Setting rs1 = 1 (bits 19:15)
     let instruction_word = 0x00008073; // rs1 = 1
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Unsupported(_) => {}
-        _ => panic!("Expected Unsupported instruction when rs1 != 0"),
-    }
+    assert_eq!(instruction, Instruction::Unsupported(instruction_word));
 }
 
 #[test]
@@ -57,9 +41,5 @@ fn invalid_with_nonzero_funct3() {
     // Setting funct3 = 1 (bits 14:12)
     let instruction_word = 0x00001073; // funct3 = 1
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Unsupported(_) => {}
-        _ => panic!("Expected Unsupported instruction when funct3 != 0"),
-    }
+    assert_eq!(instruction, Instruction::Unsupported(instruction_word));
 }

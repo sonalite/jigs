@@ -79,6 +79,32 @@ pub enum EncodeError {
     InvalidImmediate(&'static str, i32),
 }
 
+impl fmt::Display for EncodeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            EncodeError::NotImplemented(instruction) => {
+                write!(
+                    f,
+                    "Encoding not implemented for instruction: {}",
+                    instruction
+                )
+            }
+            EncodeError::InvalidRegister(field, value) => {
+                write!(
+                    f,
+                    "Invalid register value for {}: {} (must be 0-31)",
+                    field, value
+                )
+            }
+            EncodeError::InvalidImmediate(field, value) => {
+                write!(f, "Invalid immediate value for {}: {}", field, value)
+            }
+        }
+    }
+}
+
+impl std::error::Error for EncodeError {}
+
 // Masks for extracting instruction fields
 const OPCODE_MASK: u32 = 0x7F;
 const RD_MASK: u32 = 0xF80;
@@ -853,19 +879,37 @@ impl Instruction {
             Instruction::Sltu { rd, rs1, rs2 } => encode_r_type(0x33, *rd, 0x3, *rs1, *rs2, 0x00),
             Instruction::And { rd, rs1, rs2 } => encode_r_type(0x33, *rd, 0x7, *rs1, *rs2, 0x00),
             Instruction::Addi { rd, rs1, imm } => encode_i_type(0x13, *rd, 0x0, *rs1, *imm),
-            Instruction::Andi { .. } => Err(EncodeError::NotImplemented("Andi")),
-            Instruction::Ori { .. } => Err(EncodeError::NotImplemented("Ori")),
-            Instruction::Xori { .. } => Err(EncodeError::NotImplemented("Xori")),
-            Instruction::Slti { .. } => Err(EncodeError::NotImplemented("Slti")),
-            Instruction::Sltiu { .. } => Err(EncodeError::NotImplemented("Sltiu")),
-            Instruction::Slli { .. } => Err(EncodeError::NotImplemented("Slli")),
-            Instruction::Srli { .. } => Err(EncodeError::NotImplemented("Srli")),
-            Instruction::Srai { .. } => Err(EncodeError::NotImplemented("Srai")),
-            Instruction::Lb { .. } => Err(EncodeError::NotImplemented("Lb")),
-            Instruction::Lh { .. } => Err(EncodeError::NotImplemented("Lh")),
-            Instruction::Lw { .. } => Err(EncodeError::NotImplemented("Lw")),
-            Instruction::Lbu { .. } => Err(EncodeError::NotImplemented("Lbu")),
-            Instruction::Lhu { .. } => Err(EncodeError::NotImplemented("Lhu")),
+            Instruction::Slti { rd, rs1, imm } => encode_i_type(0x13, *rd, 0x2, *rs1, *imm),
+            Instruction::Sltiu { rd, rs1, imm } => encode_i_type(0x13, *rd, 0x3, *rs1, *imm),
+            Instruction::Xori { rd, rs1, imm } => encode_i_type(0x13, *rd, 0x4, *rs1, *imm),
+            Instruction::Ori { rd, rs1, imm } => encode_i_type(0x13, *rd, 0x6, *rs1, *imm),
+            Instruction::Andi { rd, rs1, imm } => encode_i_type(0x13, *rd, 0x7, *rs1, *imm),
+            Instruction::Slli { rd, rs1, shamt } => {
+                // SLLI uses I-type format with shamt in lower 5 bits of immediate
+                if *shamt > 31 {
+                    return Err(EncodeError::InvalidImmediate("shamt", *shamt as i32));
+                }
+                encode_i_type(0x13, *rd, 0x1, *rs1, *shamt as i32)
+            }
+            Instruction::Srli { rd, rs1, shamt } => {
+                // SRLI uses I-type format with shamt in lower 5 bits of immediate
+                if *shamt > 31 {
+                    return Err(EncodeError::InvalidImmediate("shamt", *shamt as i32));
+                }
+                encode_i_type(0x13, *rd, 0x5, *rs1, *shamt as i32)
+            }
+            Instruction::Srai { rd, rs1, shamt } => {
+                // SRAI uses I-type format with shamt in lower 5 bits of immediate and bit 30 set
+                if *shamt > 31 {
+                    return Err(EncodeError::InvalidImmediate("shamt", *shamt as i32));
+                }
+                encode_i_type(0x13, *rd, 0x5, *rs1, 0x400 | (*shamt as i32))
+            }
+            Instruction::Lb { rd, rs1, imm } => encode_i_type(0x03, *rd, 0x0, *rs1, *imm),
+            Instruction::Lh { rd, rs1, imm } => encode_i_type(0x03, *rd, 0x1, *rs1, *imm),
+            Instruction::Lw { rd, rs1, imm } => encode_i_type(0x03, *rd, 0x2, *rs1, *imm),
+            Instruction::Lbu { rd, rs1, imm } => encode_i_type(0x03, *rd, 0x4, *rs1, *imm),
+            Instruction::Lhu { rd, rs1, imm } => encode_i_type(0x03, *rd, 0x5, *rs1, *imm),
             Instruction::Sb { .. } => Err(EncodeError::NotImplemented("Sb")),
             Instruction::Sh { .. } => Err(EncodeError::NotImplemented("Sh")),
             Instruction::Sw { .. } => Err(EncodeError::NotImplemented("Sw")),

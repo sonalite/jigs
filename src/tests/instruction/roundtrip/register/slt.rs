@@ -1,5 +1,4 @@
-use crate::Instruction;
-use crate::tests::instruction::assert_encode_decode;
+use crate::{Instruction, tests::instruction::assert_encode_decode};
 
 #[test]
 fn basic() {

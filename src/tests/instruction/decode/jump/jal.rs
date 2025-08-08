@@ -8,14 +8,7 @@ fn basic() {
     // Encoding: imm[20]=0, imm[10:1]=0000000100, imm[11]=0, imm[19:12]=00000000
     let instruction_word = 0x008000EF; // 0 0000000100 0 00000000 00001 1101111
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Jal { rd, imm } => {
-            assert_eq!(rd, 1);
-            assert_eq!(imm, 8);
-        }
-        _ => panic!("Expected Jal instruction"),
-    }
+    assert_eq!(instruction, Instruction::Jal { rd: 1, imm: 8 });
 }
 
 #[test]
@@ -24,14 +17,7 @@ fn zero_register() {
     // rd=0, imm=0, opcode=0x6F
     let instruction_word = 0x0000006F;
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Jal { rd, imm } => {
-            assert_eq!(rd, 0);
-            assert_eq!(imm, 0);
-        }
-        _ => panic!("Expected Jal instruction"),
-    }
+    assert_eq!(instruction, Instruction::Jal { rd: 0, imm: 0 });
 }
 
 #[test]
@@ -40,14 +26,7 @@ fn max_register() {
     // rd=31, imm=16, opcode=0x6F
     let instruction_word = 0x01000FEF; // 0 0000001000 0 00000000 11111 1101111
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Jal { rd, imm } => {
-            assert_eq!(rd, 31);
-            assert_eq!(imm, 16);
-        }
-        _ => panic!("Expected Jal instruction"),
-    }
+    assert_eq!(instruction, Instruction::Jal { rd: 31, imm: 16 });
 }
 
 #[test]
@@ -58,14 +37,7 @@ fn negative_offset() {
     // bit[20]=1, bits[19:12]=11111111, bit[11]=1, bits[10:1]=1111111100
     let instruction_word = 0xFF9FF2EF; // 1 1111111100 1 11111111 00101 1101111
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Jal { rd, imm } => {
-            assert_eq!(rd, 5);
-            assert_eq!(imm, -8);
-        }
-        _ => panic!("Expected Jal instruction"),
-    }
+    assert_eq!(instruction, Instruction::Jal { rd: 5, imm: -8 });
 }
 
 #[test]
@@ -76,14 +48,13 @@ fn large_positive_offset() {
     // bit[20]=0, bits[19:12]=11111111, bit[11]=1, bits[10:1]=1111111111
     let instruction_word = 0x7FFFF56F; // 0 1111111111 1 11111111 01010 1101111
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Jal { rd, imm } => {
-            assert_eq!(rd, 10);
-            assert_eq!(imm, 1048574);
+    assert_eq!(
+        instruction,
+        Instruction::Jal {
+            rd: 10,
+            imm: 1048574
         }
-        _ => panic!("Expected Jal instruction"),
-    }
+    );
 }
 
 #[test]
@@ -94,14 +65,13 @@ fn large_negative_offset() {
     // bit[20]=1, bits[19:12]=00000000, bit[11]=0, bits[10:1]=0000000000
     let instruction_word = 0x800007EF; // 1 0000000000 0 00000000 01111 1101111
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Jal { rd, imm } => {
-            assert_eq!(rd, 15);
-            assert_eq!(imm, -1048576);
+    assert_eq!(
+        instruction,
+        Instruction::Jal {
+            rd: 15,
+            imm: -1048576
         }
-        _ => panic!("Expected Jal instruction"),
-    }
+    );
 }
 
 #[test]
@@ -111,12 +81,5 @@ fn different_registers() {
     // 256 = 0x100, bits[10:1]=0010000000
     let instruction_word = 0x10000A6F; // 0 0010000000 0 00000000 10100 1101111
     let instruction = Instruction::decode(instruction_word);
-
-    match instruction {
-        Instruction::Jal { rd, imm } => {
-            assert_eq!(rd, 20);
-            assert_eq!(imm, 256);
-        }
-        _ => panic!("Expected Jal instruction"),
-    }
+    assert_eq!(instruction, Instruction::Jal { rd: 20, imm: 256 });
 }

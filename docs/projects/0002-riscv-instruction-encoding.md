@@ -5,12 +5,12 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 
 ## Tasks
 
-### Instruction Infrastructure 🚧
+### Instruction Infrastructure ✅
 - ✅ Add encode() method to Instruction enum (returns Result<u32, EncodeError>)
 - ✅ Create EncodeError type for error handling
 - ✅ Add InvalidRegister variant to EncodeError for register bounds checking
 - ✅ Add InvalidImmediate variant to EncodeError for immediate bounds checking
-- 📋 Implement std::error::Error and std::fmt::Display for EncodeError
+- ✅ Implement std::error::Error and std::fmt::Display for EncodeError
 - ✅ Create helper function encode_r_type() for R-type instructions (with register bounds checking)
 - ✅ Create helper function encode_i_type() for I-type instructions (with register and immediate bounds checking)
 - 🚧 Create helper functions for S, B, U, and J formats as needed
@@ -28,23 +28,23 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ OR instruction
 - ✅ AND instruction
 
-### I-Type Instruction Encoding 🚧
+### I-Type Instruction Encoding ✅
 - ✅ ADDI instruction
-- 📋 SLTI instruction
-- 📋 SLTIU instruction
-- 📋 XORI instruction
-- 📋 ORI instruction
-- 📋 ANDI instruction
-- 📋 SLLI instruction
-- 📋 SRLI instruction
-- 📋 SRAI instruction
+- ✅ SLTI instruction
+- ✅ SLTIU instruction
+- ✅ XORI instruction
+- ✅ ORI instruction
+- ✅ ANDI instruction
+- ✅ SLLI instruction
+- ✅ SRLI instruction
+- ✅ SRAI instruction
 
-### Load Instruction Encoding 📋
-- 📋 LB instruction
-- 📋 LH instruction
-- 📋 LW instruction
-- 📋 LBU instruction
-- 📋 LHU instruction
+### Load Instruction Encoding ✅
+- ✅ LB instruction
+- ✅ LH instruction
+- ✅ LW instruction
+- ✅ LBU instruction
+- ✅ LHU instruction
 
 ### Store Instruction Encoding 📋
 - 📋 SB instruction
@@ -112,15 +112,16 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - Reorganized tests: `src/tests/instruction/roundtrip/` for combined encode/decode tests
 - Test utility `assert_encode_decode()` in `src/tests/instruction/mod.rs`
 - **R-Type Instructions Complete**: All 10 R-type instructions (ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND) now have full encoding support with comprehensive roundtrip tests
-- **I-Type Instructions Started**: ADDI instruction implemented with full encoding support and roundtrip tests
-- **Register Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds_checking/register/` for all R-type instructions
-- **Immediate Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds_checking/immediate/addi.rs` for ADDI instruction, verifying proper InvalidImmediate errors for values outside -2048 to 2047 range
+- **I-Type Instructions Complete**: All 9 I-type instructions (ADDI, SLTI, SLTIU, XORI, ORI, ANDI, SLLI, SRLI, SRAI) now have full encoding support with comprehensive roundtrip tests
+- **Load Instructions Complete**: All 5 load instructions (LB, LH, LW, LBU, LHU) now have full encoding support using the same encode_i_type() helper since they share the I-type format with opcode 0x03
+- **Register Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds/register/` for all R-type instructions
+- **Immediate Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds/immediate/` for all I-type instructions, verifying proper InvalidImmediate errors for values outside their valid ranges:
+  - Regular I-type instructions (ADDI, SLTI, SLTIU, XORI, ORI, ANDI): -2048 to 2047 range
+  - Shift instructions (SLLI, SRLI, SRAI): 0 to 31 range for shamt field
 
 ### Current Test Structure
-After ADDI implementation, the test organization is:
+After completing all I-type and Load instructions, the test organization is:
 - `src/tests/instruction/decode/`: Contains decode-only tests for instructions not yet encoding-enabled
-  - `immediate/`: I-type decode tests for instructions without encoding (andi, ori, xori, slti, sltiu, slli, srli, srai)
-  - `load/`: All load instruction decode tests
   - `store/`: All store instruction decode tests  
   - `branch/`: All branch instruction decode tests
   - `jump/`: All jump instruction decode tests
@@ -130,11 +131,14 @@ After ADDI implementation, the test organization is:
   - `register/`: Only contains SLL, SLT, SLTU tests (special decode cases not covered by roundtrip)
 - `src/tests/instruction/roundtrip/`: Contains bidirectional encode+decode tests
   - `register/`: All R-type instructions (add, sub, sll, slt, sltu, xor, srl, sra, or, and)
-  - `immediate/`: ADDI instruction (more I-type instructions to be added)
+  - `immediate/`: All I-type instructions (addi, slti, sltiu, xori, ori, andi, slli, srli, srai)
+  - `load/`: All load instructions (lb, lh, lw, lbu, lhu)
 - `src/tests/instruction/encode/`: Contains encode-specific tests
-  - `not_implemented.rs`: Tests verifying NotImplemented errors for unimplemented instructions
-  - `bounds_checking/register/`: Tests verifying InvalidRegister errors for out-of-bounds register values in R-type instructions
-  - `bounds_checking/immediate/`: Tests verifying InvalidImmediate errors for out-of-bounds immediate values in I-type instructions
+  - `unimplemented.rs`: Tests verifying NotImplemented errors for unimplemented instructions
+  - `bounds/register/`: Tests verifying InvalidRegister errors for out-of-bounds register values in R-type instructions
+  - `bounds/immediate/`: Tests verifying InvalidImmediate errors for out-of-bounds immediate values in all I-type instructions
+  - `bounds/load/`: Tests verifying InvalidRegister and InvalidImmediate errors for load instructions
+  - `error.rs`: Tests for EncodeError Display and Error trait implementations
 - `src/tests/instruction/display/`: Display formatting tests (unchanged)
 
 ### Key Learnings
@@ -161,7 +165,7 @@ When all encoding is complete, review the test structure for:
 - Potential reorganization options:
   - Keep roundtrip/ as primary test location, move remaining decode tests there
   - Organize by instruction format (R, I, S, B, U, J) vs functionality
-  - Consider whether encode/not_implemented.rs tests are still needed
+  - Consider whether encode/unimplemented.rs tests are still needed
 
 ## Design Considerations
 
