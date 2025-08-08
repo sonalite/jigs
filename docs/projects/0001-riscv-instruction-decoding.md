@@ -60,9 +60,9 @@ Implementation of RISC-V 32-bit instruction decoder with support for all RV32IM 
 - ✅ JAL (jump and link)
 - ✅ JALR (jump and link register)
 
-### U-Type Instructions 🚧
+### U-Type Instructions ✅
 - ✅ LUI (load upper immediate)
-- 📋 AUIPC (add upper immediate to PC)
+- ✅ AUIPC (add upper immediate to PC)
 
 ### System Instructions 📋
 - 📋 ECALL

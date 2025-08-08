@@ -1,1 +1,2 @@
+mod auipc;
 mod lui;

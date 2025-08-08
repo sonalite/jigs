@@ -62,6 +62,7 @@ const BRANCH_OPCODE: u32 = 0x63;
 const JAL_OPCODE: u32 = 0x6F;
 const JALR_OPCODE: u32 = 0x67;
 const LUI_OPCODE: u32 = 0x37;
+const AUIPC_OPCODE: u32 = 0x17;
 
 // Function codes for I-type instructions
 const ADDI_FUNCT3: u8 = 0x0;
@@ -313,6 +314,12 @@ pub enum Instruction {
     /// The immediate is a 20-bit value that will be placed in bits [31:12] of the destination register.
     Lui { rd: u8, imm: u32 },
 
+    /// Auipc instruction
+    ///
+    /// Adds the 20-bit immediate value (shifted left by 12) to the current PC and stores the result in register `rd`.
+    /// The immediate is a 20-bit value that will be placed in bits [31:12] and added to PC.
+    Auipc { rd: u8, imm: u32 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -429,6 +436,9 @@ impl fmt::Display for Instruction {
             }
             Instruction::Lui { rd, imm } => {
                 write!(f, "lui x{}, 0x{:x}", rd, imm)
+            }
+            Instruction::Auipc { rd, imm } => {
+                write!(f, "auipc x{}, 0x{:x}", rd, imm)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -708,6 +718,16 @@ impl Instruction {
                 let imm = (word & IMM_U_MASK) >> IMM_U_SHIFT;
 
                 Instruction::Lui { rd, imm }
+            }
+            AUIPC_OPCODE => {
+                // AUIPC is U-type instruction
+                let rd = ((word & RD_MASK) >> RD_SHIFT) as u8;
+
+                // U-type immediate is already in the correct position (bits 31:12)
+                // We just need to extract it
+                let imm = (word & IMM_U_MASK) >> IMM_U_SHIFT;
+
+                Instruction::Auipc { rd, imm }
             }
             _ => Instruction::Unsupported(word),
         }
