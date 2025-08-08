@@ -931,8 +931,8 @@ impl Instruction {
             Instruction::Jalr { rd, rs1, imm } => encode_i_type(0x67, *rd, 0x0, *rs1, *imm),
             Instruction::Lui { rd, imm } => encode_u_type(0x37, *rd, *imm),
             Instruction::Auipc { rd, imm } => encode_u_type(0x17, *rd, *imm),
-            Instruction::Ecall => Err(EncodeError::NotImplemented("Ecall")),
-            Instruction::Ebreak => Err(EncodeError::NotImplemented("Ebreak")),
+            Instruction::Ecall => Ok(0x00000073),
+            Instruction::Ebreak => Ok(0x00100073),
             Instruction::Unsupported(_) => Err(EncodeError::NotImplemented("Unsupported")),
         }
     }

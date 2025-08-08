@@ -81,18 +81,6 @@ fn remu() {
 }
 
 #[test]
-fn ecall() {
-    let inst = Instruction::Ecall;
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Ecall")));
-}
-
-#[test]
-fn ebreak() {
-    let inst = Instruction::Ebreak;
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Ebreak")));
-}
-
-#[test]
 fn unsupported() {
     let inst = Instruction::Unsupported(0x12345678);
     assert_eq!(

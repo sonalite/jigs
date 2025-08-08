@@ -1,23 +1,6 @@
 use crate::instruction::Instruction;
 
 #[test]
-fn basic() {
-    // ecall
-    // Full encoding: 0x00000073
-    let instruction_word = 0x00000073;
-    let instruction = Instruction::decode(instruction_word);
-    assert_eq!(instruction, Instruction::Ecall);
-}
-
-#[test]
-fn verify_exact_encoding() {
-    // ECALL must be exactly 0x00000073
-    let instruction_word = 0x00000073;
-    let instruction = Instruction::decode(instruction_word);
-    assert_eq!(instruction, Instruction::Ecall);
-}
-
-#[test]
 fn invalid_with_nonzero_rd() {
     // ecall with rd != 0 should be unsupported
     // Setting rd = 1 (bits 11:7)

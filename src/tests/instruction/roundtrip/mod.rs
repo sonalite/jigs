@@ -4,4 +4,5 @@ mod jump;
 mod load;
 mod register;
 mod store;
+mod system;
 mod utype;

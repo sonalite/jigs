@@ -35,16 +35,20 @@ fn trait_compatibility() {
 #[test]
 fn via_instruction() {
     // Test actual error generation via instruction encoding
-    let instr = Instruction::Ecall;
+    let instr = Instruction::Mul {
+        rd: 1,
+        rs1: 2,
+        rs2: 3,
+    };
     match instr.encode() {
-        Err(EncodeError::NotImplemented("Ecall")) => {
+        Err(EncodeError::NotImplemented("Mul")) => {
             // Test that we can display the actual error
-            let error_display = format!("{}", EncodeError::NotImplemented("Ecall"));
+            let error_display = format!("{}", EncodeError::NotImplemented("Mul"));
             assert_eq!(
                 error_display,
-                "Encoding not implemented for instruction: Ecall"
+                "Encoding not implemented for instruction: Mul"
             );
         }
-        _ => panic!("Expected NotImplemented error for Ecall instruction"),
+        _ => panic!("Expected NotImplemented error for Mul instruction"),
     }
 }

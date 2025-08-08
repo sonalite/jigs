@@ -70,9 +70,9 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ LUI instruction
 - ✅ AUIPC instruction
 
-### System Instruction Encoding 📋
-- 📋 ECALL instruction
-- 📋 EBREAK instruction
+### System Instruction Encoding ✅
+- ✅ ECALL instruction
+- ✅ EBREAK instruction
 
 ### M Extension Encoding 📋
 - 📋 MUL instruction
@@ -130,16 +130,20 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
   - LUI uses opcode 0x37 and loads a 20-bit immediate into the upper 20 bits of the destination register
   - AUIPC uses opcode 0x17 and adds a 20-bit immediate to the upper 20 bits of the PC
   - U-type immediates are 20-bit unsigned values (0 to 1048575)
+- **System Instructions Complete**: Both system instructions (ECALL, EBREAK) now have full encoding support:
+  - ECALL encodes as 0x00000073 (SYSTEM opcode with imm=0x000)
+  - EBREAK encodes as 0x00100073 (SYSTEM opcode with imm=0x001)
+  - System instructions have no fields and are encoded as fixed values
 - **Register Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds/register/` for all R-type instructions
 - **Immediate Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds/immediate/` for all I-type instructions, verifying proper InvalidImmediate errors for values outside their valid ranges:
   - Regular I-type instructions (ADDI, SLTI, SLTIU, XORI, ORI, ANDI): -2048 to 2047 range
   - Shift instructions (SLLI, SRLI, SRAI): 0 to 31 range for shamt field
 
 ### Current Test Structure
-After completing all I-type, Load, Store, Branch, Jump, and U-type instructions, the test organization is:
+After completing all I-type, Load, Store, Branch, Jump, U-type, and System instructions, the test organization is:
 - `src/tests/instruction/decode/`: Contains decode-only tests for instructions not yet encoding-enabled
   - `multiply/`: All M-extension decode tests
-  - `system/`: All system instruction decode tests
+  - `system/`: System instruction decode validation tests (invalid field tests)
   - `register/`: Only contains SLL, SLT, SLTU tests (special decode cases not covered by roundtrip)
 - `src/tests/instruction/roundtrip/`: Contains bidirectional encode+decode tests
   - `register/`: All R-type instructions (add, sub, sll, slt, sltu, xor, srl, sra, or, and)
@@ -149,6 +153,7 @@ After completing all I-type, Load, Store, Branch, Jump, and U-type instructions,
   - `branch/`: All branch instructions (beq, bne, blt, bge, bltu, bgeu)
   - `jump/`: All jump instructions (jal, jalr)
   - `utype/`: All U-type instructions (lui, auipc)
+  - `system/`: All system instructions (ecall, ebreak)
 - `src/tests/instruction/encode/`: Contains encode-specific tests
   - `unimplemented.rs`: Tests verifying NotImplemented errors for unimplemented instructions
   - `bounds/register/`: Tests verifying InvalidRegister errors for out-of-bounds register values in R-type instructions
