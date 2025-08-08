@@ -64,9 +64,9 @@ Implementation of RISC-V 32-bit instruction decoder with support for all RV32IM 
 - ✅ LUI (load upper immediate)
 - ✅ AUIPC (add upper immediate to PC)
 
-### System Instructions 📋
-- 📋 ECALL
-- 📋 EBREAK
+### System Instructions ✅
+- ✅ ECALL
+- ✅ EBREAK
 
 ### M Extension (Multiply/Divide) 📋
 - 📋 MUL (multiply)

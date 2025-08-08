@@ -63,6 +63,7 @@ const JAL_OPCODE: u32 = 0x6F;
 const JALR_OPCODE: u32 = 0x67;
 const LUI_OPCODE: u32 = 0x37;
 const AUIPC_OPCODE: u32 = 0x17;
+const SYSTEM_OPCODE: u32 = 0x73;
 
 // Function codes for I-type instructions
 const ADDI_FUNCT3: u8 = 0x0;
@@ -114,6 +115,10 @@ const SLTU_FUNCT3: u8 = 0x3;
 const SLTU_FUNCT7: u32 = 0x00;
 const AND_FUNCT3: u8 = 0x7;
 const AND_FUNCT7: u32 = 0x00;
+
+// System instruction immediates
+const ECALL_IMM: u32 = 0x000;
+const EBREAK_IMM: u32 = 0x001;
 
 /// RISC-V instruction representation for 32-bit IM
 #[derive(Debug)]
@@ -320,6 +325,18 @@ pub enum Instruction {
     /// The immediate is a 20-bit value that will be placed in bits [31:12] and added to PC.
     Auipc { rd: u8, imm: u32 },
 
+    /// Ecall instruction
+    ///
+    /// Environment call - used to make a request to the supporting execution environment.
+    /// Typically used for system calls in an operating system.
+    Ecall,
+
+    /// Ebreak instruction
+    ///
+    /// Environment breakpoint - used to return control to a debugging environment.
+    /// Causes the processor to enter debug mode.
+    Ebreak,
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -439,6 +456,12 @@ impl fmt::Display for Instruction {
             }
             Instruction::Auipc { rd, imm } => {
                 write!(f, "auipc x{}, 0x{:x}", rd, imm)
+            }
+            Instruction::Ecall => {
+                write!(f, "ecall")
+            }
+            Instruction::Ebreak => {
+                write!(f, "ebreak")
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -728,6 +751,24 @@ impl Instruction {
                 let imm = (word & IMM_U_MASK) >> IMM_U_SHIFT;
 
                 Instruction::Auipc { rd, imm }
+            }
+            SYSTEM_OPCODE => {
+                // System instructions - check the immediate field to determine which one
+                // For ECALL and EBREAK, funct3 must be 0 and rs1, rd must be 0
+                let funct3 = (((word & FUNCT3_MASK) >> FUNCT3_SHIFT) & 0x7) as u8;
+                let rd = ((word & RD_MASK) >> RD_SHIFT) as u8;
+                let rs1 = ((word & RS1_MASK) >> RS1_SHIFT) as u8;
+                let imm = (word & IMM_I_MASK) >> IMM_I_SHIFT;
+
+                if funct3 == 0 && rd == 0 && rs1 == 0 {
+                    match imm {
+                        ECALL_IMM => Instruction::Ecall,
+                        EBREAK_IMM => Instruction::Ebreak,
+                        _ => Instruction::Unsupported(word),
+                    }
+                } else {
+                    Instruction::Unsupported(word)
+                }
             }
             _ => Instruction::Unsupported(word),
         }
