@@ -146,6 +146,18 @@ pub enum Instruction {
     /// Part of the M extension.
     Divu { rd: u8, rs1: u8, rs2: u8 },
 
+    /// Rem instruction
+    ///
+    /// Computes the remainder of the signed division of the value in register `rs1` by the value in register `rs2` and stores the result in `rd`.
+    /// Part of the M extension.
+    Rem { rd: u8, rs1: u8, rs2: u8 },
+
+    /// Remu instruction
+    ///
+    /// Computes the remainder of the unsigned division of the value in register `rs1` by the value in register `rs2` and stores the result in `rd`.
+    /// Part of the M extension.
+    Remu { rd: u8, rs1: u8, rs2: u8 },
+
     /// Addi instruction
     ///
     /// Adds the sign-extended 12-bit immediate to the value in register `rs1` and stores the result in `rd`.
@@ -363,6 +375,12 @@ impl fmt::Display for Instruction {
             Instruction::Divu { rd, rs1, rs2 } => {
                 write!(f, "divu x{}, x{}, x{}", rd, rs1, rs2)
             }
+            Instruction::Rem { rd, rs1, rs2 } => {
+                write!(f, "rem x{}, x{}, x{}", rd, rs1, rs2)
+            }
+            Instruction::Remu { rd, rs1, rs2 } => {
+                write!(f, "remu x{}, x{}, x{}", rd, rs1, rs2)
+            }
             Instruction::Addi { rd, rs1, imm } => {
                 write!(f, "addi x{}, x{}, {}", rd, rs1, imm)
             }
@@ -501,6 +519,8 @@ impl Instruction {
                     (0x3, 0x01) => Instruction::Mulhu { rd, rs1, rs2 }, // MULHU
                     (0x4, 0x01) => Instruction::Div { rd, rs1, rs2 }, // DIV
                     (0x5, 0x01) => Instruction::Divu { rd, rs1, rs2 }, // DIVU
+                    (0x6, 0x01) => Instruction::Rem { rd, rs1, rs2 }, // REM
+                    (0x7, 0x01) => Instruction::Remu { rd, rs1, rs2 }, // REMU
 
                     // Unknown combination
                     _ => Instruction::Unsupported(word),
