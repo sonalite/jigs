@@ -47,6 +47,12 @@ const IMM_J_11_SHIFT: u32 = 20;
 const IMM_J_10_1_MASK: u32 = 0x7FE00000; // bits 30:21 -> imm[10:1]
 const IMM_J_10_1_SHIFT: u32 = 21;
 
+// U-type immediate masks and shifts for LUI and AUIPC
+// U-type immediate is encoded as: imm[31:12]|rd|opcode
+// The immediate represents the upper 20 bits
+const IMM_U_MASK: u32 = 0xFFFFF000; // bits 31:12 -> imm[31:12]
+const IMM_U_SHIFT: u32 = 12;
+
 // Opcodes
 const REG_OPCODE: u32 = 0x33;
 const IMM_OPCODE: u32 = 0x13;
@@ -55,6 +61,7 @@ const STORE_OPCODE: u32 = 0x23;
 const BRANCH_OPCODE: u32 = 0x63;
 const JAL_OPCODE: u32 = 0x6F;
 const JALR_OPCODE: u32 = 0x67;
+const LUI_OPCODE: u32 = 0x37;
 
 // Function codes for I-type instructions
 const ADDI_FUNCT3: u8 = 0x0;
@@ -300,6 +307,12 @@ pub enum Instruction {
     /// The immediate is a signed 12-bit value.
     Jalr { rd: u8, rs1: u8, imm: i32 },
 
+    /// Lui instruction
+    ///
+    /// Loads the 20-bit immediate value into the upper 20 bits of register `rd`, zeroing the lower 12 bits.
+    /// The immediate is a 20-bit value that will be placed in bits [31:12] of the destination register.
+    Lui { rd: u8, imm: u32 },
+
     /// Unsupported instruction
     ///
     /// Represents an instruction that is not yet implemented or recognized.
@@ -413,6 +426,9 @@ impl fmt::Display for Instruction {
             }
             Instruction::Jalr { rd, rs1, imm } => {
                 write!(f, "jalr x{}, {}(x{})", rd, imm, rs1)
+            }
+            Instruction::Lui { rd, imm } => {
+                write!(f, "lui x{}, 0x{:x}", rd, imm)
             }
             Instruction::Unsupported(word) => {
                 write!(f, "unsupported: 0x{:08x}", word)
@@ -682,6 +698,16 @@ impl Instruction {
                 } else {
                     Instruction::Unsupported(word)
                 }
+            }
+            LUI_OPCODE => {
+                // LUI is U-type instruction
+                let rd = ((word & RD_MASK) >> RD_SHIFT) as u8;
+
+                // U-type immediate is already in the correct position (bits 31:12)
+                // We just need to extract it
+                let imm = (word & IMM_U_MASK) >> IMM_U_SHIFT;
+
+                Instruction::Lui { rd, imm }
             }
             _ => Instruction::Unsupported(word),
         }

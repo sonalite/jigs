@@ -5,3 +5,4 @@ mod load;
 mod register;
 mod store;
 mod unsupported;
+mod utype;
