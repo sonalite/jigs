@@ -68,6 +68,13 @@
 
 use std::fmt;
 
+/// Error type for instruction encoding failures.
+#[derive(Debug, Clone, PartialEq)]
+pub enum EncodeError {
+    /// The instruction variant is not yet implemented for encoding
+    NotImplemented(&'static str),
+}
+
 // Masks for extracting instruction fields
 const OPCODE_MASK: u32 = 0x7F;
 const RD_MASK: u32 = 0xF80;
@@ -122,7 +129,7 @@ const IMM_U_MASK: u32 = 0xFFFFF000; // bits 31:12 -> imm[31:12]
 const IMM_U_SHIFT: u32 = 12;
 
 /// RISC-V instruction representation for 32-bit IM
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Instruction {
     /// Add instruction
     ///
@@ -817,4 +824,80 @@ impl Instruction {
             _ => Instruction::Unsupported(word),
         }
     }
+
+    /// Encode an instruction into a 32-bit instruction word
+    ///
+    /// # Returns
+    ///
+    /// Returns the encoded 32-bit instruction word on success, or an `EncodeError` if the
+    /// instruction cannot be encoded.
+    ///
+    /// # Errors
+    ///
+    /// Returns `EncodeError::NotImplemented` for instruction variants that have not yet been
+    /// implemented for encoding.
+    pub fn encode(&self) -> Result<u32, EncodeError> {
+        match self {
+            Instruction::Add { rd, rs1, rs2 } => {
+                Ok(encode_r_type(0x33, *rd, 0x0, *rs1, *rs2, 0x00))
+            }
+            Instruction::Sub { .. } => Err(EncodeError::NotImplemented("Sub")),
+            Instruction::Sll { .. } => Err(EncodeError::NotImplemented("Sll")),
+            Instruction::Xor { .. } => Err(EncodeError::NotImplemented("Xor")),
+            Instruction::Or { .. } => Err(EncodeError::NotImplemented("Or")),
+            Instruction::Srl { .. } => Err(EncodeError::NotImplemented("Srl")),
+            Instruction::Sra { .. } => Err(EncodeError::NotImplemented("Sra")),
+            Instruction::Slt { .. } => Err(EncodeError::NotImplemented("Slt")),
+            Instruction::Sltu { .. } => Err(EncodeError::NotImplemented("Sltu")),
+            Instruction::And { .. } => Err(EncodeError::NotImplemented("And")),
+            Instruction::Addi { .. } => Err(EncodeError::NotImplemented("Addi")),
+            Instruction::Andi { .. } => Err(EncodeError::NotImplemented("Andi")),
+            Instruction::Ori { .. } => Err(EncodeError::NotImplemented("Ori")),
+            Instruction::Xori { .. } => Err(EncodeError::NotImplemented("Xori")),
+            Instruction::Slti { .. } => Err(EncodeError::NotImplemented("Slti")),
+            Instruction::Sltiu { .. } => Err(EncodeError::NotImplemented("Sltiu")),
+            Instruction::Slli { .. } => Err(EncodeError::NotImplemented("Slli")),
+            Instruction::Srli { .. } => Err(EncodeError::NotImplemented("Srli")),
+            Instruction::Srai { .. } => Err(EncodeError::NotImplemented("Srai")),
+            Instruction::Lb { .. } => Err(EncodeError::NotImplemented("Lb")),
+            Instruction::Lh { .. } => Err(EncodeError::NotImplemented("Lh")),
+            Instruction::Lw { .. } => Err(EncodeError::NotImplemented("Lw")),
+            Instruction::Lbu { .. } => Err(EncodeError::NotImplemented("Lbu")),
+            Instruction::Lhu { .. } => Err(EncodeError::NotImplemented("Lhu")),
+            Instruction::Sb { .. } => Err(EncodeError::NotImplemented("Sb")),
+            Instruction::Sh { .. } => Err(EncodeError::NotImplemented("Sh")),
+            Instruction::Sw { .. } => Err(EncodeError::NotImplemented("Sw")),
+            Instruction::Beq { .. } => Err(EncodeError::NotImplemented("Beq")),
+            Instruction::Bne { .. } => Err(EncodeError::NotImplemented("Bne")),
+            Instruction::Blt { .. } => Err(EncodeError::NotImplemented("Blt")),
+            Instruction::Bge { .. } => Err(EncodeError::NotImplemented("Bge")),
+            Instruction::Bltu { .. } => Err(EncodeError::NotImplemented("Bltu")),
+            Instruction::Bgeu { .. } => Err(EncodeError::NotImplemented("Bgeu")),
+            Instruction::Mul { .. } => Err(EncodeError::NotImplemented("Mul")),
+            Instruction::Mulh { .. } => Err(EncodeError::NotImplemented("Mulh")),
+            Instruction::Mulhsu { .. } => Err(EncodeError::NotImplemented("Mulhsu")),
+            Instruction::Mulhu { .. } => Err(EncodeError::NotImplemented("Mulhu")),
+            Instruction::Div { .. } => Err(EncodeError::NotImplemented("Div")),
+            Instruction::Divu { .. } => Err(EncodeError::NotImplemented("Divu")),
+            Instruction::Rem { .. } => Err(EncodeError::NotImplemented("Rem")),
+            Instruction::Remu { .. } => Err(EncodeError::NotImplemented("Remu")),
+            Instruction::Jal { .. } => Err(EncodeError::NotImplemented("Jal")),
+            Instruction::Jalr { .. } => Err(EncodeError::NotImplemented("Jalr")),
+            Instruction::Lui { .. } => Err(EncodeError::NotImplemented("Lui")),
+            Instruction::Auipc { .. } => Err(EncodeError::NotImplemented("Auipc")),
+            Instruction::Ecall => Err(EncodeError::NotImplemented("Ecall")),
+            Instruction::Ebreak => Err(EncodeError::NotImplemented("Ebreak")),
+            Instruction::Unsupported(_) => Err(EncodeError::NotImplemented("Unsupported")),
+        }
+    }
+}
+
+/// Encode an R-type instruction
+fn encode_r_type(opcode: u32, rd: u8, funct3: u32, rs1: u8, rs2: u8, funct7: u32) -> u32 {
+    opcode
+        | ((rd as u32) << RD_SHIFT)
+        | (funct3 << FUNCT3_SHIFT)
+        | ((rs1 as u32) << RS1_SHIFT)
+        | ((rs2 as u32) << RS2_SHIFT)
+        | (funct7 << FUNCT7_SHIFT)
 }

@@ -1,17 +1,20 @@
-# Project 0002: RISC-V 32-bit IM Instruction Encoding 📋
+# Project 0002: RISC-V 32-bit IM Instruction Encoding 🚧
 
 ### Overview
 Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum variants into 32-bit instruction words. This complements the decoder by enabling bidirectional conversion between instruction representations and machine code.
 
 ## Tasks
 
-### Instruction Infrastructure 📋
-- 📋 Add encode() method to Instruction enum (single function like decode for maximum performance)
-- 📋 Implement field packing logic for R, I, S, B, U, and J formats within encode()
-- 📋 Add comprehensive test suite structure (encode tests)
+### Instruction Infrastructure 🚧
+- ✅ Add encode() method to Instruction enum (returns Result<u32, EncodeError>)
+- ✅ Create EncodeError type for error handling
+- 📋 Implement std::error::Error and std::fmt::Display for EncodeError
+- ✅ Create helper function encode_r_type() for R-type instructions
+- 🚧 Create helper functions for I, S, B, U, and J formats as needed
+- ✅ Add comprehensive test suite structure (roundtrip tests in src/tests/instruction/roundtrip/)
 
-### R-Type Instruction Encoding 📋
-- 📋 ADD instruction
+### R-Type Instruction Encoding 🚧
+- ✅ ADD instruction
 - 📋 SUB instruction  
 - 📋 SLL instruction
 - 📋 SLT instruction
@@ -75,16 +78,33 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - 📋 REM instruction
 - 📋 REMU instruction
 
-### Testing & Validation 📋
-- 📋 Modify existing decode tests to be bidirectional (test both decode and encode)
-- 📋 Create helper function for bidirectional testing that all tests use
-- 📋 Round-trip tests (encode then decode should match original)
+### Testing & Validation 🚧
+- ✅ Create helper function assert_encode_decode() for bidirectional testing
+- ✅ Reorganize tests into roundtrip directory for combined encode/decode testing
+- ✅ Remove duplicate decode tests that are covered by roundtrip tests
+- ✅ Round-trip tests (encode then decode should match original)
 - 📋 Verify encoding matches RISC-V specification test vectors
 - 📋 Edge case testing for immediate value ranges
-- 📋 100% code coverage maintained
+- ✅ 100% code coverage maintained
 
 ### Documentation 📋
 - 📋 Add encoding examples to documentation
+
+## Implementation Notes
+
+### Completed Infrastructure
+- Created `EncodeError` enum with `NotImplemented` variant for gradual implementation
+- Added `encode()` method that returns `Result<u32, EncodeError>`
+- Created `encode_r_type()` helper function at bottom of file for R-type encoding
+- Reorganized tests: `src/tests/instruction/roundtrip/` for combined encode/decode tests
+- Test utility `assert_encode_decode()` in `src/tests/instruction/mod.rs`
+
+### Key Learnings
+- Helper functions like `encode_r_type()` should be placed at the bottom of the file
+- Roundtrip tests eliminate duplication between encode and decode test suites
+- Test organization should mirror instruction types (register/, immediate/, etc.)
+- All instruction variants must derive `Debug`, `Clone`, and `PartialEq` for testing
+- EncodeError should implement std::error::Error and std::fmt::Display traits for proper error handling
 
 ## Design Considerations
 
