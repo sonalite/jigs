@@ -8,19 +8,23 @@ Jigs - A high-performance RISC-V runtime for ARM64 systems with gas-metered exec
 2. JIT-compiles RISC-V code to native ARM64 for near-native performance
 3. Provides gas-metered execution for controlled resource usage in blockchain/sandboxed environments
 
-Currently implements decoding and display formatting for 32-bit RISC-V instructions, with encoding, JIT compilation, and gas tracking planned.
+Currently implements full decoding and encoding for all RV32IM instructions (base integer instructions plus M extension), with JIT compilation and gas tracking planned.
 
 ## Architecture
 The project is structured as a Rust library with an example binary:
 - **src/lib.rs**: Library entry point that exports public APIs
 - **src/main.rs**: Example binary demonstrating instruction decoding
-- **src/instruction.rs**: Core instruction representation and decoding logic
+- **src/instruction.rs**: Core instruction representation, decoding, and encoding logic
   - `Instruction` enum with variants for each RISC-V instruction (Add, Sub, etc.)
-  - Decode method that extracts fields from 32-bit instruction words using bitmasking
+  - `decode()` method that extracts fields from 32-bit instruction words using bitmasking
+  - `encode()` method that converts Instruction variants back to 32-bit instruction words
   - Display trait implementation for assembly-style output
+  - `EncodeError` enum for encoding error handling (InvalidRegister, InvalidImmediate, NotImplemented)
   - Supports RV32IM: base integer instructions plus M extension (multiply/divide)
 - **src/tests/**: Comprehensive test suite organized by functionality
-  - `decode/`: Tests for instruction decoding (register, immediate, load, store, branch, multiply, jump, system, utype)
+  - `roundtrip/`: Bidirectional encode+decode tests for all instruction types
+  - `encode/`: Encoding-specific tests (bounds checking, error handling)
+  - `decode/`: Remaining decode-only tests for special validation cases
   - `display/`: Tests for instruction display formatting
 
 ## Commands
@@ -44,9 +48,10 @@ The project is structured as a Rust library with an example binary:
 ## Testing Conventions
 - Unit tests should live in the `src/tests/` directory
 - For small test suites: use a single file (e.g., `src/tests/feature.rs`)
-- For large test suites: create a folder with separate files organized by feature (e.g., `src/tests/instruction/decode/add.rs`, `src/tests/instruction/decode/sub.rs`)
-- Test names should be concise and NOT include "test" or the subject being tested, as this is implied by the module structure (e.g., in `tests/instruction/decode/add.rs`, use `fn basic()` not `fn test_add_basic()`)
+- For large test suites: create a folder with separate files organized by feature
+- Test names should be concise and NOT include "test" or the subject being tested, as this is implied by the module structure (e.g., in `tests/instruction/roundtrip/add.rs`, use `fn basic()` not `fn test_add_basic()`)
 - When implementing similar functionality to existing features, review existing tests to ensure consistent test coverage (e.g., if ADD has tests for basic, zero_registers, max_registers, and different_registers, similar instructions should have the same test cases)
+- Ensure all edge cases are covered including boundary values, error conditions, and invalid inputs
 - Test formatting: Tests under 10 lines should have no blank lines within the test body for conciseness
 
 ## Code Style Conventions
