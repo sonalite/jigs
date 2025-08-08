@@ -74,29 +74,27 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ ECALL instruction
 - ✅ EBREAK instruction
 
-### M Extension Encoding 📋
-- 📋 MUL instruction
-- 📋 MULH instruction
-- 📋 MULHSU instruction
-- 📋 MULHU instruction
-- 📋 DIV instruction
-- 📋 DIVU instruction
-- 📋 REM instruction
-- 📋 REMU instruction
+### M Extension Encoding ✅
+- ✅ MUL instruction
+- ✅ MULH instruction
+- ✅ MULHSU instruction
+- ✅ MULHU instruction
+- ✅ DIV instruction
+- ✅ DIVU instruction
+- ✅ REM instruction
+- ✅ REMU instruction
 
-### Testing & Validation 🚧
+### Testing & Validation ✅
 - ✅ Create helper function assert_encode_decode() for bidirectional testing
 - ✅ Reorganize tests into roundtrip directory for combined encode/decode testing
 - ✅ Remove duplicate decode tests that are covered by roundtrip tests
 - ✅ Round-trip tests (encode then decode should match original)
 - ✅ Register bounds checking tests for R-type instructions (InvalidRegister error)
 - ✅ Immediate bounds checking tests for I-type instructions (InvalidImmediate error)
-- 📋 Verify encoding matches RISC-V specification test vectors
 - ✅ Edge case testing for immediate value ranges
 - ✅ 100% code coverage maintained
-- ✅ R-type instructions: All decode tests migrated to roundtrip tests
-- 🚧 I-type, S-type, B-type, U-type, J-type: Decode tests remain, will migrate as encoding is implemented
-- 📋 Final test structure review: Evaluate and reorganize test directory structure for optimal discoverability and maintainability
+- ✅ All instruction types: Decode tests migrated to roundtrip tests where applicable
+- ✅ M Extension: All decode tests migrated to roundtrip tests with bounds checking
 
 ### Documentation 📋
 - 📋 Add encoding examples to documentation
@@ -134,17 +132,22 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
   - ECALL encodes as 0x00000073 (SYSTEM opcode with imm=0x000)
   - EBREAK encodes as 0x00100073 (SYSTEM opcode with imm=0x001)
   - System instructions have no fields and are encoded as fixed values
+- **M Extension Instructions Complete**: All 8 M-extension instructions (MUL, MULH, MULHSU, MULHU, DIV, DIVU, REM, REMU) now have full encoding support:
+  - All M-extension instructions use R-type format with opcode 0x33 and funct7=0x01
+  - funct3 values: MUL=0x0, MULH=0x1, MULHSU=0x2, MULHU=0x3, DIV=0x4, DIVU=0x5, REM=0x6, REMU=0x7
+  - Comprehensive roundtrip tests verify both encoding and decoding
+  - Bounds checking tests ensure proper register validation
 - **Register Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds/register/` for all R-type instructions
 - **Immediate Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds/immediate/` for all I-type instructions, verifying proper InvalidImmediate errors for values outside their valid ranges:
   - Regular I-type instructions (ADDI, SLTI, SLTIU, XORI, ORI, ANDI): -2048 to 2047 range
   - Shift instructions (SLLI, SRLI, SRAI): 0 to 31 range for shamt field
 
 ### Current Test Structure
-After completing all I-type, Load, Store, Branch, Jump, U-type, and System instructions, the test organization is:
-- `src/tests/instruction/decode/`: Contains decode-only tests for instructions not yet encoding-enabled
-  - `multiply/`: All M-extension decode tests
+After completing all instruction encoding, the test organization is:
+- `src/tests/instruction/decode/`: Contains decode-only tests for special validation cases
   - `system/`: System instruction decode validation tests (invalid field tests)
   - `register/`: Only contains SLL, SLT, SLTU tests (special decode cases not covered by roundtrip)
+  - `unsupported.rs`: Tests for unsupported instruction patterns
 - `src/tests/instruction/roundtrip/`: Contains bidirectional encode+decode tests
   - `register/`: All R-type instructions (add, sub, sll, slt, sltu, xor, srl, sra, or, and)
   - `immediate/`: All I-type instructions (addi, slti, sltiu, xori, ori, andi, slli, srli, srai)
@@ -154,8 +157,9 @@ After completing all I-type, Load, Store, Branch, Jump, U-type, and System instr
   - `jump/`: All jump instructions (jal, jalr)
   - `utype/`: All U-type instructions (lui, auipc)
   - `system/`: All system instructions (ecall, ebreak)
+  - `multiply/`: All M-extension instructions (mul, mulh, mulhsu, mulhu, div, divu, rem, remu)
 - `src/tests/instruction/encode/`: Contains encode-specific tests
-  - `unimplemented.rs`: Tests verifying NotImplemented errors for unimplemented instructions
+  - `unimplemented.rs`: Tests verifying NotImplemented errors for unimplemented instructions (only Unsupported)
   - `bounds/register/`: Tests verifying InvalidRegister errors for out-of-bounds register values in R-type instructions
   - `bounds/immediate/`: Tests verifying InvalidImmediate errors for out-of-bounds immediate values in all I-type instructions
   - `bounds/load/`: Tests verifying InvalidRegister and InvalidImmediate errors for load instructions
@@ -163,6 +167,7 @@ After completing all I-type, Load, Store, Branch, Jump, U-type, and System instr
   - `bounds/branch/`: Tests verifying InvalidRegister and InvalidImmediate errors for branch instructions (including odd offset validation)
   - `bounds/jump/`: Tests verifying InvalidRegister and InvalidImmediate errors for jump instructions (including odd offset validation for JAL)
   - `bounds/utype/`: Tests verifying InvalidRegister and InvalidImmediate errors for U-type instructions (lui, auipc)
+  - `bounds/multiply/`: Tests verifying InvalidRegister errors for M-extension instructions
   - `error.rs`: Tests for EncodeError Display and Error trait implementations
 - `src/tests/instruction/display/`: Display formatting tests (unchanged)
 
