@@ -15,7 +15,7 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 
 ### R-Type Instruction Encoding 🚧
 - ✅ ADD instruction
-- 📋 SUB instruction  
+- ✅ SUB instruction  
 - 📋 SLL instruction
 - 📋 SLT instruction
 - 📋 SLTU instruction
@@ -86,6 +86,7 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - 📋 Verify encoding matches RISC-V specification test vectors
 - 📋 Edge case testing for immediate value ranges
 - ✅ 100% code coverage maintained
+- 🚧 Remove decode tests for each instruction as roundtrip tests are added
 
 ### Documentation 📋
 - 📋 Add encoding examples to documentation
@@ -107,6 +108,7 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - Test organization should mirror instruction types (register/, immediate/, etc.)
 - All instruction variants must derive `Debug`, `Clone`, and `PartialEq` for testing
 - EncodeError should implement std::error::Error and std::fmt::Display traits for proper error handling
+- **IMPORTANT**: When implementing encoding for an instruction, remove only the decode test functions that are covered by roundtrip tests (e.g., in `src/tests/instruction/decode/register/sub.rs`, remove functions like `basic()`, `zero_registers()`, etc. when adding `src/tests/instruction/roundtrip/register/sub.rs`). Keep any decode failure tests that aren't covered by roundtrip. If no tests remain in the file after removal, delete the file and update the mod.rs
 
 ## Design Considerations
 

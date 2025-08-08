@@ -72,6 +72,11 @@ Before committing any changes, ensure all of the following pass without warnings
 
 ## Development Tracking
 - **@docs/ROADMAP.md**: Contains the roadmap of planned features and implementation status
+- **IMPORTANT**: When doing work on any project, ALWAYS read the entire project file (e.g., `docs/projects/0002-riscv-instruction-encoding.md`) to understand:
+  - Current implementation status and completed tasks
+  - Key learnings and implementation notes from previous work
+  - Design considerations and conventions to follow
+  - Any special instructions or important notes marked with **IMPORTANT**
 - When implementing features or making changes to the codebase, update the relevant project document linked from ROADMAP.md to reflect the current status
 - Mark individual tasks as "Completed" (✅) when fully implemented and tested
 - Update project status icons in both the project file header and ROADMAP.md:

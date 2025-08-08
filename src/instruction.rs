@@ -841,7 +841,9 @@ impl Instruction {
             Instruction::Add { rd, rs1, rs2 } => {
                 Ok(encode_r_type(0x33, *rd, 0x0, *rs1, *rs2, 0x00))
             }
-            Instruction::Sub { .. } => Err(EncodeError::NotImplemented("Sub")),
+            Instruction::Sub { rd, rs1, rs2 } => {
+                Ok(encode_r_type(0x33, *rd, 0x0, *rs1, *rs2, 0x20))
+            }
             Instruction::Sll { .. } => Err(EncodeError::NotImplemented("Sll")),
             Instruction::Xor { .. } => Err(EncodeError::NotImplemented("Xor")),
             Instruction::Or { .. } => Err(EncodeError::NotImplemented("Or")),

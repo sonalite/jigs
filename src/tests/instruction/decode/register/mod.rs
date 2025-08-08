@@ -5,5 +5,4 @@ mod slt;
 mod sltu;
 mod sra;
 mod srl;
-mod sub;
 mod xor;
