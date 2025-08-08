@@ -851,7 +851,9 @@ impl Instruction {
             Instruction::Or { .. } => Err(EncodeError::NotImplemented("Or")),
             Instruction::Srl { .. } => Err(EncodeError::NotImplemented("Srl")),
             Instruction::Sra { .. } => Err(EncodeError::NotImplemented("Sra")),
-            Instruction::Slt { .. } => Err(EncodeError::NotImplemented("Slt")),
+            Instruction::Slt { rd, rs1, rs2 } => {
+                Ok(encode_r_type(0x33, *rd, 0x2, *rs1, *rs2, 0x00))
+            }
             Instruction::Sltu { .. } => Err(EncodeError::NotImplemented("Sltu")),
             Instruction::And { .. } => Err(EncodeError::NotImplemented("And")),
             Instruction::Addi { .. } => Err(EncodeError::NotImplemented("Addi")),
