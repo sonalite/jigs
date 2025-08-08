@@ -638,7 +638,7 @@ impl Instruction {
                     }
                     0x6 => Instruction::Ori { rd, rs1, imm }, // ORI
                     0x7 => Instruction::Andi { rd, rs1, imm }, // ANDI
-                    _ => Instruction::Unsupported(word),
+                    _ => unreachable!("funct3 is masked to 3 bits, so it's always 0-7"),
                 }
             }
             0x03 => {
