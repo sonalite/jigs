@@ -81,24 +81,6 @@ fn remu() {
 }
 
 #[test]
-fn lui() {
-    let inst = Instruction::Lui {
-        rd: 1,
-        imm: 0x12345,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Lui")));
-}
-
-#[test]
-fn auipc() {
-    let inst = Instruction::Auipc {
-        rd: 1,
-        imm: 0x12345,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Auipc")));
-}
-
-#[test]
 fn ecall() {
     let inst = Instruction::Ecall;
     assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Ecall")));

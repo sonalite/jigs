@@ -929,8 +929,8 @@ impl Instruction {
             Instruction::Remu { .. } => Err(EncodeError::NotImplemented("Remu")),
             Instruction::Jal { rd, imm } => encode_j_type(0x6F, *rd, *imm),
             Instruction::Jalr { rd, rs1, imm } => encode_i_type(0x67, *rd, 0x0, *rs1, *imm),
-            Instruction::Lui { .. } => Err(EncodeError::NotImplemented("Lui")),
-            Instruction::Auipc { .. } => Err(EncodeError::NotImplemented("Auipc")),
+            Instruction::Lui { rd, imm } => encode_u_type(0x37, *rd, *imm),
+            Instruction::Auipc { rd, imm } => encode_u_type(0x17, *rd, *imm),
             Instruction::Ecall => Err(EncodeError::NotImplemented("Ecall")),
             Instruction::Ebreak => Err(EncodeError::NotImplemented("Ebreak")),
             Instruction::Unsupported(_) => Err(EncodeError::NotImplemented("Unsupported")),
@@ -1073,4 +1073,18 @@ fn encode_j_type(opcode: u32, rd: u8, imm: i32) -> Result<u32, EncodeError> {
         | (bit_11 << IMM_J_11_SHIFT)
         | (bits_10_1 << IMM_J_10_1_SHIFT)
         | (bit_20 << IMM_J_20_SHIFT))
+}
+
+fn encode_u_type(opcode: u32, rd: u8, imm: u32) -> Result<u32, EncodeError> {
+    if rd > 31 {
+        return Err(EncodeError::InvalidRegister("rd", rd));
+    }
+    // U-type immediates are 20-bit unsigned values (0 to 1048575)
+    if imm > 1048575 {
+        return Err(EncodeError::InvalidImmediate("imm", imm as i32));
+    }
+    // U-type immediate encoding:
+    // The immediate is stored in bits 31:12 of the instruction
+    // It represents the upper 20 bits of a 32-bit value (imm << 12)
+    Ok(opcode | ((rd as u32) << RD_SHIFT) | (imm << IMM_U_SHIFT))
 }

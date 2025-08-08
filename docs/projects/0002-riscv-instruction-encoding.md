@@ -16,6 +16,7 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ Create helper function encode_s_type() for S-type instructions (with register and immediate bounds checking)
 - ✅ Create helper function encode_b_type() for B-type instructions (with register and immediate bounds checking)
 - ✅ Create helper function encode_j_type() for J-type instructions (with register and immediate bounds checking)
+- ✅ Create helper function encode_u_type() for U-type instructions (with register and immediate bounds checking)
 - ✅ Add comprehensive test suite structure (roundtrip tests in src/tests/instruction/roundtrip/)
 
 ### R-Type Instruction Encoding ✅
@@ -65,9 +66,9 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ JAL instruction
 - ✅ JALR instruction
 
-### U-Type Instruction Encoding 📋
-- 📋 LUI instruction
-- 📋 AUIPC instruction
+### U-Type Instruction Encoding ✅
+- ✅ LUI instruction
+- ✅ AUIPC instruction
 
 ### System Instruction Encoding 📋
 - 📋 ECALL instruction
@@ -111,6 +112,10 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - Added `encode()` method that returns `Result<u32, EncodeError>`
 - Created `encode_r_type()` helper function at bottom of file for R-type encoding with register bounds checking
 - Created `encode_i_type()` helper function for I-type encoding with register and immediate bounds checking
+- Created `encode_s_type()` helper function for S-type encoding with register and immediate bounds checking
+- Created `encode_b_type()` helper function for B-type encoding with register and immediate bounds checking (includes alignment validation)
+- Created `encode_j_type()` helper function for J-type encoding with register and immediate bounds checking (includes alignment validation)
+- Created `encode_u_type()` helper function for U-type encoding with register and immediate bounds checking
 - Reorganized tests: `src/tests/instruction/roundtrip/` for combined encode/decode tests
 - Test utility `assert_encode_decode()` in `src/tests/instruction/mod.rs`
 - **R-Type Instructions Complete**: All 10 R-type instructions (ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND) now have full encoding support with comprehensive roundtrip tests
@@ -121,16 +126,19 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - **Jump Instructions Complete**: Both jump instructions (JAL, JALR) now have full encoding support:
   - JAL uses the new encode_j_type() helper with opcode 0x6F. J-type immediates must be even (aligned to 2-byte boundaries) and within the range -1048576 to 1048574
   - JALR uses the existing encode_i_type() helper with opcode 0x67 and funct3 = 0x0. I-type immediates must be within the range -2048 to 2047
+- **U-Type Instructions Complete**: Both U-type instructions (LUI, AUIPC) now have full encoding support using the new encode_u_type() helper:
+  - LUI uses opcode 0x37 and loads a 20-bit immediate into the upper 20 bits of the destination register
+  - AUIPC uses opcode 0x17 and adds a 20-bit immediate to the upper 20 bits of the PC
+  - U-type immediates are 20-bit unsigned values (0 to 1048575)
 - **Register Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds/register/` for all R-type instructions
 - **Immediate Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds/immediate/` for all I-type instructions, verifying proper InvalidImmediate errors for values outside their valid ranges:
   - Regular I-type instructions (ADDI, SLTI, SLTIU, XORI, ORI, ANDI): -2048 to 2047 range
   - Shift instructions (SLLI, SRLI, SRAI): 0 to 31 range for shamt field
 
 ### Current Test Structure
-After completing all I-type, Load, Store, Branch, and Jump instructions, the test organization is:
+After completing all I-type, Load, Store, Branch, Jump, and U-type instructions, the test organization is:
 - `src/tests/instruction/decode/`: Contains decode-only tests for instructions not yet encoding-enabled
   - `multiply/`: All M-extension decode tests
-  - `utype/`: All U-type decode tests
   - `system/`: All system instruction decode tests
   - `register/`: Only contains SLL, SLT, SLTU tests (special decode cases not covered by roundtrip)
 - `src/tests/instruction/roundtrip/`: Contains bidirectional encode+decode tests
@@ -140,6 +148,7 @@ After completing all I-type, Load, Store, Branch, and Jump instructions, the tes
   - `store/`: All store instructions (sb, sh, sw)
   - `branch/`: All branch instructions (beq, bne, blt, bge, bltu, bgeu)
   - `jump/`: All jump instructions (jal, jalr)
+  - `utype/`: All U-type instructions (lui, auipc)
 - `src/tests/instruction/encode/`: Contains encode-specific tests
   - `unimplemented.rs`: Tests verifying NotImplemented errors for unimplemented instructions
   - `bounds/register/`: Tests verifying InvalidRegister errors for out-of-bounds register values in R-type instructions
@@ -148,6 +157,7 @@ After completing all I-type, Load, Store, Branch, and Jump instructions, the tes
   - `bounds/store/`: Tests verifying InvalidRegister and InvalidImmediate errors for store instructions
   - `bounds/branch/`: Tests verifying InvalidRegister and InvalidImmediate errors for branch instructions (including odd offset validation)
   - `bounds/jump/`: Tests verifying InvalidRegister and InvalidImmediate errors for jump instructions (including odd offset validation for JAL)
+  - `bounds/utype/`: Tests verifying InvalidRegister and InvalidImmediate errors for U-type instructions (lui, auipc)
   - `error.rs`: Tests for EncodeError Display and Error trait implementations
 - `src/tests/instruction/display/`: Display formatting tests (unchanged)
 
