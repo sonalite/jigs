@@ -35,16 +35,19 @@ fn trait_compatibility() {
 #[test]
 fn via_instruction() {
     // Test actual error generation via instruction encoding
-    let instr = Instruction::Jal { rd: 1, imm: 100 };
+    let instr = Instruction::Lui {
+        rd: 1,
+        imm: 0x12345,
+    };
     match instr.encode() {
-        Err(EncodeError::NotImplemented("Jal")) => {
+        Err(EncodeError::NotImplemented("Lui")) => {
             // Test that we can display the actual error
-            let error_display = format!("{}", EncodeError::NotImplemented("Jal"));
+            let error_display = format!("{}", EncodeError::NotImplemented("Lui"));
             assert_eq!(
                 error_display,
-                "Encoding not implemented for instruction: Jal"
+                "Encoding not implemented for instruction: Lui"
             );
         }
-        _ => panic!("Expected NotImplemented error for Jal instruction"),
+        _ => panic!("Expected NotImplemented error for Lui instruction"),
     }
 }

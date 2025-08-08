@@ -81,22 +81,6 @@ fn remu() {
 }
 
 #[test]
-fn jal() {
-    let inst = Instruction::Jal { rd: 1, imm: 100 };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Jal")));
-}
-
-#[test]
-fn jalr() {
-    let inst = Instruction::Jalr {
-        rd: 1,
-        rs1: 2,
-        imm: 100,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Jalr")));
-}
-
-#[test]
 fn lui() {
     let inst = Instruction::Lui {
         rd: 1,

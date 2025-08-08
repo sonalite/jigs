@@ -927,8 +927,8 @@ impl Instruction {
             Instruction::Divu { .. } => Err(EncodeError::NotImplemented("Divu")),
             Instruction::Rem { .. } => Err(EncodeError::NotImplemented("Rem")),
             Instruction::Remu { .. } => Err(EncodeError::NotImplemented("Remu")),
-            Instruction::Jal { .. } => Err(EncodeError::NotImplemented("Jal")),
-            Instruction::Jalr { .. } => Err(EncodeError::NotImplemented("Jalr")),
+            Instruction::Jal { rd, imm } => encode_j_type(0x6F, *rd, *imm),
+            Instruction::Jalr { rd, rs1, imm } => encode_i_type(0x67, *rd, 0x0, *rs1, *imm),
             Instruction::Lui { .. } => Err(EncodeError::NotImplemented("Lui")),
             Instruction::Auipc { .. } => Err(EncodeError::NotImplemented("Auipc")),
             Instruction::Ecall => Err(EncodeError::NotImplemented("Ecall")),
@@ -1044,4 +1044,33 @@ fn encode_b_type(opcode: u32, funct3: u32, rs1: u8, rs2: u8, imm: i32) -> Result
         | ((rs2 as u32) << RS2_SHIFT)
         | (bits_10_5 << IMM_B_10_5_SHIFT)
         | (bit_12 << IMM_B_12_SHIFT))
+}
+
+/// Encode a J-type instruction
+fn encode_j_type(opcode: u32, rd: u8, imm: i32) -> Result<u32, EncodeError> {
+    if rd > 31 {
+        return Err(EncodeError::InvalidRegister("rd", rd));
+    }
+    // J-type immediates are 21-bit signed values that must be even (-1048576 to 1048574)
+    // The LSB is always 0 (jumps are aligned to 2-byte boundaries)
+    if imm & 1 != 0 {
+        return Err(EncodeError::InvalidImmediate("imm", imm));
+    }
+    if !(-1048576..=1048574).contains(&imm) {
+        return Err(EncodeError::InvalidImmediate("imm", imm));
+    }
+    // J-type immediate encoding (extremely scrambled):
+    // inst[31] = imm[20], inst[30:21] = imm[10:1], inst[20] = imm[11], inst[19:12] = imm[19:12]
+    let imm_bits = imm as u32;
+    let bit_20 = (imm_bits >> 20) & 0x1;
+    let bits_19_12 = (imm_bits >> 12) & 0xFF;
+    let bit_11 = (imm_bits >> 11) & 0x1;
+    let bits_10_1 = (imm_bits >> 1) & 0x3FF;
+
+    Ok(opcode
+        | ((rd as u32) << RD_SHIFT)
+        | (bits_19_12 << IMM_J_19_12_SHIFT)
+        | (bit_11 << IMM_J_11_SHIFT)
+        | (bits_10_1 << IMM_J_10_1_SHIFT)
+        | (bit_20 << IMM_J_20_SHIFT))
 }

@@ -15,7 +15,7 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ Create helper function encode_i_type() for I-type instructions (with register and immediate bounds checking)
 - ✅ Create helper function encode_s_type() for S-type instructions (with register and immediate bounds checking)
 - ✅ Create helper function encode_b_type() for B-type instructions (with register and immediate bounds checking)
-- 🚧 Create helper functions for U and J formats as needed
+- ✅ Create helper function encode_j_type() for J-type instructions (with register and immediate bounds checking)
 - ✅ Add comprehensive test suite structure (roundtrip tests in src/tests/instruction/roundtrip/)
 
 ### R-Type Instruction Encoding ✅
@@ -61,9 +61,9 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ BLTU instruction
 - ✅ BGEU instruction
 
-### Jump Instruction Encoding 📋
-- 📋 JAL instruction
-- 📋 JALR instruction
+### Jump Instruction Encoding ✅
+- ✅ JAL instruction
+- ✅ JALR instruction
 
 ### U-Type Instruction Encoding 📋
 - 📋 LUI instruction
@@ -118,15 +118,17 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - **Load Instructions Complete**: All 5 load instructions (LB, LH, LW, LBU, LHU) now have full encoding support using the same encode_i_type() helper since they share the I-type format with opcode 0x03
 - **Store Instructions Complete**: All 3 store instructions (SB, SH, SW) now have full encoding support using the new encode_s_type() helper with opcode 0x23 and appropriate funct3 values
 - **Branch Instructions Complete**: All 6 branch instructions (BEQ, BNE, BLT, BGE, BLTU, BGEU) now have full encoding support using the new encode_b_type() helper with opcode 0x63 and appropriate funct3 values. B-type immediates must be even (aligned to 2-byte boundaries) and within the range -4096 to 4094
+- **Jump Instructions Complete**: Both jump instructions (JAL, JALR) now have full encoding support:
+  - JAL uses the new encode_j_type() helper with opcode 0x6F. J-type immediates must be even (aligned to 2-byte boundaries) and within the range -1048576 to 1048574
+  - JALR uses the existing encode_i_type() helper with opcode 0x67 and funct3 = 0x0. I-type immediates must be within the range -2048 to 2047
 - **Register Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds/register/` for all R-type instructions
 - **Immediate Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds/immediate/` for all I-type instructions, verifying proper InvalidImmediate errors for values outside their valid ranges:
   - Regular I-type instructions (ADDI, SLTI, SLTIU, XORI, ORI, ANDI): -2048 to 2047 range
   - Shift instructions (SLLI, SRLI, SRAI): 0 to 31 range for shamt field
 
 ### Current Test Structure
-After completing all I-type, Load, Store, and Branch instructions, the test organization is:
+After completing all I-type, Load, Store, Branch, and Jump instructions, the test organization is:
 - `src/tests/instruction/decode/`: Contains decode-only tests for instructions not yet encoding-enabled
-  - `jump/`: All jump instruction decode tests
   - `multiply/`: All M-extension decode tests
   - `utype/`: All U-type decode tests
   - `system/`: All system instruction decode tests
@@ -137,6 +139,7 @@ After completing all I-type, Load, Store, and Branch instructions, the test orga
   - `load/`: All load instructions (lb, lh, lw, lbu, lhu)
   - `store/`: All store instructions (sb, sh, sw)
   - `branch/`: All branch instructions (beq, bne, blt, bge, bltu, bgeu)
+  - `jump/`: All jump instructions (jal, jalr)
 - `src/tests/instruction/encode/`: Contains encode-specific tests
   - `unimplemented.rs`: Tests verifying NotImplemented errors for unimplemented instructions
   - `bounds/register/`: Tests verifying InvalidRegister errors for out-of-bounds register values in R-type instructions
@@ -144,6 +147,7 @@ After completing all I-type, Load, Store, and Branch instructions, the test orga
   - `bounds/load/`: Tests verifying InvalidRegister and InvalidImmediate errors for load instructions
   - `bounds/store/`: Tests verifying InvalidRegister and InvalidImmediate errors for store instructions
   - `bounds/branch/`: Tests verifying InvalidRegister and InvalidImmediate errors for branch instructions (including odd offset validation)
+  - `bounds/jump/`: Tests verifying InvalidRegister and InvalidImmediate errors for jump instructions (including odd offset validation for JAL)
   - `error.rs`: Tests for EncodeError Display and Error trait implementations
 - `src/tests/instruction/display/`: Display formatting tests (unchanged)
 
