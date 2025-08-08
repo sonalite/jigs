@@ -82,5 +82,5 @@ Implementation of RISC-V 32-bit instruction decoder with support for all RV32IM 
 - ✅ 100% code coverage for instruction.rs maintained throughout development
 - ✅ Comprehensive test suite for each instruction (basic, zero_registers, max_registers, different_registers, wrong_funct7)
 - ✅ Add module-level documentation to instruction.rs
-- 📋 Compare implementation against RISC-V spec for correctness
+- ✅ Compare implementation against RISC-V spec for correctness
 - 📋 Update all project documentation (CLAUDE.md architecture section, ROADMAP.md status)
