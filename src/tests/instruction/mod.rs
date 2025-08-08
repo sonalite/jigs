@@ -1,6 +1,7 @@
 mod decode;
 mod display;
 mod encode;
+mod error;
 mod roundtrip;
 
 use crate::Instruction;
