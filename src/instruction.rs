@@ -913,12 +913,12 @@ impl Instruction {
             Instruction::Sb { rs1, rs2, imm } => encode_s_type(0x23, 0x0, *rs1, *rs2, *imm),
             Instruction::Sh { rs1, rs2, imm } => encode_s_type(0x23, 0x1, *rs1, *rs2, *imm),
             Instruction::Sw { rs1, rs2, imm } => encode_s_type(0x23, 0x2, *rs1, *rs2, *imm),
-            Instruction::Beq { .. } => Err(EncodeError::NotImplemented("Beq")),
-            Instruction::Bne { .. } => Err(EncodeError::NotImplemented("Bne")),
-            Instruction::Blt { .. } => Err(EncodeError::NotImplemented("Blt")),
-            Instruction::Bge { .. } => Err(EncodeError::NotImplemented("Bge")),
-            Instruction::Bltu { .. } => Err(EncodeError::NotImplemented("Bltu")),
-            Instruction::Bgeu { .. } => Err(EncodeError::NotImplemented("Bgeu")),
+            Instruction::Beq { rs1, rs2, imm } => encode_b_type(0x63, 0x0, *rs1, *rs2, *imm),
+            Instruction::Bne { rs1, rs2, imm } => encode_b_type(0x63, 0x1, *rs1, *rs2, *imm),
+            Instruction::Blt { rs1, rs2, imm } => encode_b_type(0x63, 0x4, *rs1, *rs2, *imm),
+            Instruction::Bge { rs1, rs2, imm } => encode_b_type(0x63, 0x5, *rs1, *rs2, *imm),
+            Instruction::Bltu { rs1, rs2, imm } => encode_b_type(0x63, 0x6, *rs1, *rs2, *imm),
+            Instruction::Bgeu { rs1, rs2, imm } => encode_b_type(0x63, 0x7, *rs1, *rs2, *imm),
             Instruction::Mul { .. } => Err(EncodeError::NotImplemented("Mul")),
             Instruction::Mulh { .. } => Err(EncodeError::NotImplemented("Mulh")),
             Instruction::Mulhsu { .. } => Err(EncodeError::NotImplemented("Mulhsu")),
@@ -1010,4 +1010,38 @@ fn encode_s_type(opcode: u32, funct3: u32, rs1: u8, rs2: u8, imm: i32) -> Result
         | ((rs1 as u32) << RS1_SHIFT)
         | ((rs2 as u32) << RS2_SHIFT)
         | (imm_11_5 << IMM_S_11_5_SHIFT))
+}
+
+/// Encode a B-type instruction
+fn encode_b_type(opcode: u32, funct3: u32, rs1: u8, rs2: u8, imm: i32) -> Result<u32, EncodeError> {
+    if rs1 > 31 {
+        return Err(EncodeError::InvalidRegister("rs1", rs1));
+    }
+    if rs2 > 31 {
+        return Err(EncodeError::InvalidRegister("rs2", rs2));
+    }
+    // B-type immediates are 13-bit signed values that must be even (-4096 to 4094)
+    // The LSB is always 0 (branches are aligned to 2-byte boundaries)
+    if imm & 1 != 0 {
+        return Err(EncodeError::InvalidImmediate("imm", imm));
+    }
+    if !(-4096..=4094).contains(&imm) {
+        return Err(EncodeError::InvalidImmediate("imm", imm));
+    }
+    // B-type immediate encoding:
+    // inst[31] = imm[12], inst[30:25] = imm[10:5], inst[11:8] = imm[4:1], inst[7] = imm[11]
+    let imm_bits = imm as u32;
+    let bit_12 = (imm_bits >> 12) & 0x1;
+    let bit_11 = (imm_bits >> 11) & 0x1;
+    let bits_10_5 = (imm_bits >> 5) & 0x3F;
+    let bits_4_1 = (imm_bits >> 1) & 0xF;
+
+    Ok(opcode
+        | (bit_11 << IMM_B_11_SHIFT)
+        | (bits_4_1 << IMM_B_4_1_SHIFT)
+        | (funct3 << FUNCT3_SHIFT)
+        | ((rs1 as u32) << RS1_SHIFT)
+        | ((rs2 as u32) << RS2_SHIFT)
+        | (bits_10_5 << IMM_B_10_5_SHIFT)
+        | (bit_12 << IMM_B_12_SHIFT))
 }

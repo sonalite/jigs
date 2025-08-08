@@ -1,66 +1,6 @@
 use crate::{EncodeError, Instruction};
 
 #[test]
-fn beq() {
-    let inst = Instruction::Beq {
-        rs1: 1,
-        rs2: 2,
-        imm: 100,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Beq")));
-}
-
-#[test]
-fn bne() {
-    let inst = Instruction::Bne {
-        rs1: 1,
-        rs2: 2,
-        imm: 100,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Bne")));
-}
-
-#[test]
-fn blt() {
-    let inst = Instruction::Blt {
-        rs1: 1,
-        rs2: 2,
-        imm: 100,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Blt")));
-}
-
-#[test]
-fn bge() {
-    let inst = Instruction::Bge {
-        rs1: 1,
-        rs2: 2,
-        imm: 100,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Bge")));
-}
-
-#[test]
-fn bltu() {
-    let inst = Instruction::Bltu {
-        rs1: 1,
-        rs2: 2,
-        imm: 100,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Bltu")));
-}
-
-#[test]
-fn bgeu() {
-    let inst = Instruction::Bgeu {
-        rs1: 1,
-        rs2: 2,
-        imm: 100,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Bgeu")));
-}
-
-#[test]
 fn mul() {
     let inst = Instruction::Mul {
         rd: 1,

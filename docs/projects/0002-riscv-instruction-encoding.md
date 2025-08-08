@@ -14,7 +14,8 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ Create helper function encode_r_type() for R-type instructions (with register bounds checking)
 - ✅ Create helper function encode_i_type() for I-type instructions (with register and immediate bounds checking)
 - ✅ Create helper function encode_s_type() for S-type instructions (with register and immediate bounds checking)
-- 🚧 Create helper functions for B, U, and J formats as needed
+- ✅ Create helper function encode_b_type() for B-type instructions (with register and immediate bounds checking)
+- 🚧 Create helper functions for U and J formats as needed
 - ✅ Add comprehensive test suite structure (roundtrip tests in src/tests/instruction/roundtrip/)
 
 ### R-Type Instruction Encoding ✅
@@ -52,13 +53,13 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ SH instruction
 - ✅ SW instruction
 
-### Branch Instruction Encoding 📋
-- 📋 BEQ instruction
-- 📋 BNE instruction
-- 📋 BLT instruction
-- 📋 BGE instruction
-- 📋 BLTU instruction
-- 📋 BGEU instruction
+### Branch Instruction Encoding ✅
+- ✅ BEQ instruction
+- ✅ BNE instruction
+- ✅ BLT instruction
+- ✅ BGE instruction
+- ✅ BLTU instruction
+- ✅ BGEU instruction
 
 ### Jump Instruction Encoding 📋
 - 📋 JAL instruction
@@ -116,15 +117,15 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - **I-Type Instructions Complete**: All 9 I-type instructions (ADDI, SLTI, SLTIU, XORI, ORI, ANDI, SLLI, SRLI, SRAI) now have full encoding support with comprehensive roundtrip tests
 - **Load Instructions Complete**: All 5 load instructions (LB, LH, LW, LBU, LHU) now have full encoding support using the same encode_i_type() helper since they share the I-type format with opcode 0x03
 - **Store Instructions Complete**: All 3 store instructions (SB, SH, SW) now have full encoding support using the new encode_s_type() helper with opcode 0x23 and appropriate funct3 values
+- **Branch Instructions Complete**: All 6 branch instructions (BEQ, BNE, BLT, BGE, BLTU, BGEU) now have full encoding support using the new encode_b_type() helper with opcode 0x63 and appropriate funct3 values. B-type immediates must be even (aligned to 2-byte boundaries) and within the range -4096 to 4094
 - **Register Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds/register/` for all R-type instructions
 - **Immediate Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds/immediate/` for all I-type instructions, verifying proper InvalidImmediate errors for values outside their valid ranges:
   - Regular I-type instructions (ADDI, SLTI, SLTIU, XORI, ORI, ANDI): -2048 to 2047 range
   - Shift instructions (SLLI, SRLI, SRAI): 0 to 31 range for shamt field
 
 ### Current Test Structure
-After completing all I-type, Load, and Store instructions, the test organization is:
+After completing all I-type, Load, Store, and Branch instructions, the test organization is:
 - `src/tests/instruction/decode/`: Contains decode-only tests for instructions not yet encoding-enabled
-  - `branch/`: All branch instruction decode tests
   - `jump/`: All jump instruction decode tests
   - `multiply/`: All M-extension decode tests
   - `utype/`: All U-type decode tests
@@ -135,12 +136,14 @@ After completing all I-type, Load, and Store instructions, the test organization
   - `immediate/`: All I-type instructions (addi, slti, sltiu, xori, ori, andi, slli, srli, srai)
   - `load/`: All load instructions (lb, lh, lw, lbu, lhu)
   - `store/`: All store instructions (sb, sh, sw)
+  - `branch/`: All branch instructions (beq, bne, blt, bge, bltu, bgeu)
 - `src/tests/instruction/encode/`: Contains encode-specific tests
   - `unimplemented.rs`: Tests verifying NotImplemented errors for unimplemented instructions
   - `bounds/register/`: Tests verifying InvalidRegister errors for out-of-bounds register values in R-type instructions
   - `bounds/immediate/`: Tests verifying InvalidImmediate errors for out-of-bounds immediate values in all I-type instructions
   - `bounds/load/`: Tests verifying InvalidRegister and InvalidImmediate errors for load instructions
   - `bounds/store/`: Tests verifying InvalidRegister and InvalidImmediate errors for store instructions
+  - `bounds/branch/`: Tests verifying InvalidRegister and InvalidImmediate errors for branch instructions (including odd offset validation)
   - `error.rs`: Tests for EncodeError Display and Error trait implementations
 - `src/tests/instruction/display/`: Display formatting tests (unchanged)
 
