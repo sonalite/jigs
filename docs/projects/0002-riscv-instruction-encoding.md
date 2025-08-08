@@ -9,9 +9,10 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ Add encode() method to Instruction enum (returns Result<u32, EncodeError>)
 - ✅ Create EncodeError type for error handling
 - ✅ Add InvalidRegister variant to EncodeError for register bounds checking
+- ✅ Add InvalidImmediate variant to EncodeError for immediate bounds checking
 - 📋 Implement std::error::Error and std::fmt::Display for EncodeError
 - ✅ Create helper function encode_r_type() for R-type instructions (with register bounds checking)
-- ✅ Create helper function encode_i_type() for I-type instructions
+- ✅ Create helper function encode_i_type() for I-type instructions (with register and immediate bounds checking)
 - 🚧 Create helper functions for S, B, U, and J formats as needed
 - ✅ Add comprehensive test suite structure (roundtrip tests in src/tests/instruction/roundtrip/)
 
@@ -86,8 +87,9 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ Remove duplicate decode tests that are covered by roundtrip tests
 - ✅ Round-trip tests (encode then decode should match original)
 - ✅ Register bounds checking tests for R-type instructions (InvalidRegister error)
+- ✅ Immediate bounds checking tests for I-type instructions (InvalidImmediate error)
 - 📋 Verify encoding matches RISC-V specification test vectors
-- 📋 Edge case testing for immediate value ranges
+- ✅ Edge case testing for immediate value ranges
 - ✅ 100% code coverage maintained
 - ✅ R-type instructions: All decode tests migrated to roundtrip tests
 - 🚧 I-type, S-type, B-type, U-type, J-type: Decode tests remain, will migrate as encoding is implemented
@@ -103,14 +105,16 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 ### Completed Infrastructure
 - Created `EncodeError` enum with `NotImplemented` variant for gradual implementation
 - Added `InvalidRegister` variant to `EncodeError` for register bounds checking (stores register name and invalid value)
+- Added `InvalidImmediate` variant to `EncodeError` for immediate bounds checking (stores field name and invalid value)
 - Added `encode()` method that returns `Result<u32, EncodeError>`
 - Created `encode_r_type()` helper function at bottom of file for R-type encoding with register bounds checking
-- Created `encode_i_type()` helper function for I-type encoding
+- Created `encode_i_type()` helper function for I-type encoding with register and immediate bounds checking
 - Reorganized tests: `src/tests/instruction/roundtrip/` for combined encode/decode tests
 - Test utility `assert_encode_decode()` in `src/tests/instruction/mod.rs`
 - **R-Type Instructions Complete**: All 10 R-type instructions (ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND) now have full encoding support with comprehensive roundtrip tests
 - **I-Type Instructions Started**: ADDI instruction implemented with full encoding support and roundtrip tests
 - **Register Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds_checking/register/` for all R-type instructions
+- **Immediate Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds_checking/immediate/addi.rs` for ADDI instruction, verifying proper InvalidImmediate errors for values outside -2048 to 2047 range
 
 ### Current Test Structure
 After ADDI implementation, the test organization is:
@@ -130,6 +134,7 @@ After ADDI implementation, the test organization is:
 - `src/tests/instruction/encode/`: Contains encode-specific tests
   - `not_implemented.rs`: Tests verifying NotImplemented errors for unimplemented instructions
   - `bounds_checking/register/`: Tests verifying InvalidRegister errors for out-of-bounds register values in R-type instructions
+  - `bounds_checking/immediate/`: Tests verifying InvalidImmediate errors for out-of-bounds immediate values in I-type instructions
 - `src/tests/instruction/display/`: Display formatting tests (unchanged)
 
 ### Key Learnings
@@ -142,7 +147,8 @@ After ADDI implementation, the test organization is:
 - All R-type instructions follow the same encoding pattern using `encode_r_type()` with appropriate funct3 and funct7 values
 - Test migration strategy: As each instruction type gets encoding support, its decode tests are replaced with roundtrip tests that verify both encode and decode operations
 - **Register Bounds Checking**: The `encode_r_type()` function validates that all register values (rd, rs1, rs2) are within the valid range (0-31) and returns `InvalidRegister` error with the register name and invalid value if out of bounds
-- **Comprehensive Error Testing**: Each R-type instruction needs bounds checking tests for all three register fields (rd, rs1, rs2) to ensure 100% code coverage
+- **Immediate Bounds Checking**: The `encode_i_type()` function validates that immediate values are within the valid range for I-type instructions (-2048 to 2047) and returns `InvalidImmediate` error with the field name and invalid value if out of bounds
+- **Comprehensive Error Testing**: Each instruction needs bounds checking tests for all applicable fields (registers and immediates) to ensure 100% code coverage
 
 ### Final Test Structure Review Considerations
 When all encoding is complete, review the test structure for:

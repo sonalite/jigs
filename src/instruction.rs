@@ -75,6 +75,8 @@ pub enum EncodeError {
     NotImplemented(&'static str),
     /// A register value exceeds the valid range (0-31)
     InvalidRegister(&'static str, u8),
+    /// An immediate value exceeds the valid range for the instruction type
+    InvalidImmediate(&'static str, i32),
 }
 
 // Masks for extracting instruction fields
@@ -850,7 +852,7 @@ impl Instruction {
             Instruction::Slt { rd, rs1, rs2 } => encode_r_type(0x33, *rd, 0x2, *rs1, *rs2, 0x00),
             Instruction::Sltu { rd, rs1, rs2 } => encode_r_type(0x33, *rd, 0x3, *rs1, *rs2, 0x00),
             Instruction::And { rd, rs1, rs2 } => encode_r_type(0x33, *rd, 0x7, *rs1, *rs2, 0x00),
-            Instruction::Addi { rd, rs1, imm } => Ok(encode_i_type(0x13, *rd, 0x0, *rs1, *imm)),
+            Instruction::Addi { rd, rs1, imm } => encode_i_type(0x13, *rd, 0x0, *rs1, *imm),
             Instruction::Andi { .. } => Err(EncodeError::NotImplemented("Andi")),
             Instruction::Ori { .. } => Err(EncodeError::NotImplemented("Ori")),
             Instruction::Xori { .. } => Err(EncodeError::NotImplemented("Xori")),
@@ -920,11 +922,21 @@ fn encode_r_type(
 }
 
 /// Encode an I-type instruction
-fn encode_i_type(opcode: u32, rd: u8, funct3: u32, rs1: u8, imm: i32) -> u32 {
+fn encode_i_type(opcode: u32, rd: u8, funct3: u32, rs1: u8, imm: i32) -> Result<u32, EncodeError> {
+    if rd > 31 {
+        return Err(EncodeError::InvalidRegister("rd", rd));
+    }
+    if rs1 > 31 {
+        return Err(EncodeError::InvalidRegister("rs1", rs1));
+    }
+    // I-type immediates are 12-bit signed values (-2048 to 2047)
+    if !(-2048..=2047).contains(&imm) {
+        return Err(EncodeError::InvalidImmediate("imm", imm));
+    }
     let imm_bits = (imm & 0xFFF) as u32;
-    opcode
+    Ok(opcode
         | ((rd as u32) << RD_SHIFT)
         | (funct3 << FUNCT3_SHIFT)
         | ((rs1 as u32) << RS1_SHIFT)
-        | (imm_bits << IMM_I_SHIFT)
+        | (imm_bits << IMM_I_SHIFT))
 }
