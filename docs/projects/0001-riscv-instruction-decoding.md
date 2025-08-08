@@ -73,8 +73,8 @@ Implementation of RISC-V 32-bit instruction decoder with support for all RV32IM 
 - ✅ MULH (multiply high signed)
 - ✅ MULHSU (multiply high signed-unsigned)
 - ✅ MULHU (multiply high unsigned)
-- 📋 DIV (divide signed)
-- 📋 DIVU (divide unsigned)
+- ✅ DIV (divide signed)
+- ✅ DIVU (divide unsigned)
 - 📋 REM (remainder signed)
 - 📋 REMU (remainder unsigned)
 

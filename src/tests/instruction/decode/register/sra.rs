@@ -70,9 +70,9 @@ fn different_registers() {
 
 #[test]
 fn wrong_funct7() {
-    // sra with wrong funct7 (should be 0x20, using 0x01)
-    // rd=15, rs1=14, rs2=15, funct3=0x5, funct7=0x01, opcode=0x33
-    let instruction_word = 0x02F757B3; // 0000001 01111 01110 101 01111 0110011
+    // sra with wrong funct7 (should be 0x20, using 0x10)
+    // rd=15, rs1=14, rs2=15, funct3=0x5, funct7=0x10, opcode=0x33
+    let instruction_word = 0x20F757B3; // 0010000 01111 01110 101 01111 0110011
     let instruction = Instruction::decode(instruction_word);
 
     match instruction {

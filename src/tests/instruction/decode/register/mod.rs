@@ -1,9 +1,5 @@
 mod add;
 mod and;
-mod mul;
-mod mulh;
-mod mulhsu;
-mod mulhu;
 mod or;
 mod sll;
 mod slt;
