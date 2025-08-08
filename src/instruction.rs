@@ -847,17 +847,25 @@ impl Instruction {
             Instruction::Sll { rd, rs1, rs2 } => {
                 Ok(encode_r_type(0x33, *rd, 0x1, *rs1, *rs2, 0x00))
             }
-            Instruction::Xor { .. } => Err(EncodeError::NotImplemented("Xor")),
-            Instruction::Or { .. } => Err(EncodeError::NotImplemented("Or")),
-            Instruction::Srl { .. } => Err(EncodeError::NotImplemented("Srl")),
-            Instruction::Sra { .. } => Err(EncodeError::NotImplemented("Sra")),
+            Instruction::Xor { rd, rs1, rs2 } => {
+                Ok(encode_r_type(0x33, *rd, 0x4, *rs1, *rs2, 0x00))
+            }
+            Instruction::Or { rd, rs1, rs2 } => Ok(encode_r_type(0x33, *rd, 0x6, *rs1, *rs2, 0x00)),
+            Instruction::Srl { rd, rs1, rs2 } => {
+                Ok(encode_r_type(0x33, *rd, 0x5, *rs1, *rs2, 0x00))
+            }
+            Instruction::Sra { rd, rs1, rs2 } => {
+                Ok(encode_r_type(0x33, *rd, 0x5, *rs1, *rs2, 0x20))
+            }
             Instruction::Slt { rd, rs1, rs2 } => {
                 Ok(encode_r_type(0x33, *rd, 0x2, *rs1, *rs2, 0x00))
             }
             Instruction::Sltu { rd, rs1, rs2 } => {
                 Ok(encode_r_type(0x33, *rd, 0x3, *rs1, *rs2, 0x00))
             }
-            Instruction::And { .. } => Err(EncodeError::NotImplemented("And")),
+            Instruction::And { rd, rs1, rs2 } => {
+                Ok(encode_r_type(0x33, *rd, 0x7, *rs1, *rs2, 0x00))
+            }
             Instruction::Addi { .. } => Err(EncodeError::NotImplemented("Addi")),
             Instruction::Andi { .. } => Err(EncodeError::NotImplemented("Andi")),
             Instruction::Ori { .. } => Err(EncodeError::NotImplemented("Ori")),

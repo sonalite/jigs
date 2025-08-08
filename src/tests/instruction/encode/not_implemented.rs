@@ -1,56 +1,6 @@
 use crate::instruction::{EncodeError, Instruction};
 
 #[test]
-fn xor() {
-    let inst = Instruction::Xor {
-        rd: 1,
-        rs1: 2,
-        rs2: 3,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Xor")));
-}
-
-#[test]
-fn or() {
-    let inst = Instruction::Or {
-        rd: 1,
-        rs1: 2,
-        rs2: 3,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Or")));
-}
-
-#[test]
-fn srl() {
-    let inst = Instruction::Srl {
-        rd: 1,
-        rs1: 2,
-        rs2: 3,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Srl")));
-}
-
-#[test]
-fn sra() {
-    let inst = Instruction::Sra {
-        rd: 1,
-        rs1: 2,
-        rs2: 3,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Sra")));
-}
-
-#[test]
-fn and() {
-    let inst = Instruction::And {
-        rd: 1,
-        rs1: 2,
-        rs2: 3,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("And")));
-}
-
-#[test]
 fn addi() {
     let inst = Instruction::Addi {
         rd: 1,
