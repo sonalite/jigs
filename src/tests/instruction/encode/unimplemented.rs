@@ -1,36 +1,6 @@
 use crate::{EncodeError, Instruction};
 
 #[test]
-fn sb() {
-    let inst = Instruction::Sb {
-        rs1: 1,
-        rs2: 2,
-        imm: 100,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Sb")));
-}
-
-#[test]
-fn sh() {
-    let inst = Instruction::Sh {
-        rs1: 1,
-        rs2: 2,
-        imm: 100,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Sh")));
-}
-
-#[test]
-fn sw() {
-    let inst = Instruction::Sw {
-        rs1: 1,
-        rs2: 2,
-        imm: 100,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Sw")));
-}
-
-#[test]
 fn beq() {
     let inst = Instruction::Beq {
         rs1: 1,

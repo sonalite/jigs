@@ -910,9 +910,9 @@ impl Instruction {
             Instruction::Lw { rd, rs1, imm } => encode_i_type(0x03, *rd, 0x2, *rs1, *imm),
             Instruction::Lbu { rd, rs1, imm } => encode_i_type(0x03, *rd, 0x4, *rs1, *imm),
             Instruction::Lhu { rd, rs1, imm } => encode_i_type(0x03, *rd, 0x5, *rs1, *imm),
-            Instruction::Sb { .. } => Err(EncodeError::NotImplemented("Sb")),
-            Instruction::Sh { .. } => Err(EncodeError::NotImplemented("Sh")),
-            Instruction::Sw { .. } => Err(EncodeError::NotImplemented("Sw")),
+            Instruction::Sb { rs1, rs2, imm } => encode_s_type(0x23, 0x0, *rs1, *rs2, *imm),
+            Instruction::Sh { rs1, rs2, imm } => encode_s_type(0x23, 0x1, *rs1, *rs2, *imm),
+            Instruction::Sw { rs1, rs2, imm } => encode_s_type(0x23, 0x2, *rs1, *rs2, *imm),
             Instruction::Beq { .. } => Err(EncodeError::NotImplemented("Beq")),
             Instruction::Bne { .. } => Err(EncodeError::NotImplemented("Bne")),
             Instruction::Blt { .. } => Err(EncodeError::NotImplemented("Blt")),
@@ -983,4 +983,31 @@ fn encode_i_type(opcode: u32, rd: u8, funct3: u32, rs1: u8, imm: i32) -> Result<
         | (funct3 << FUNCT3_SHIFT)
         | ((rs1 as u32) << RS1_SHIFT)
         | (imm_bits << IMM_I_SHIFT))
+}
+
+/// Encode an S-type instruction
+fn encode_s_type(opcode: u32, funct3: u32, rs1: u8, rs2: u8, imm: i32) -> Result<u32, EncodeError> {
+    if rs1 > 31 {
+        return Err(EncodeError::InvalidRegister("rs1", rs1));
+    }
+    if rs2 > 31 {
+        return Err(EncodeError::InvalidRegister("rs2", rs2));
+    }
+    // S-type immediates are 12-bit signed values (-2048 to 2047)
+    if !(-2048..=2047).contains(&imm) {
+        return Err(EncodeError::InvalidImmediate("imm", imm));
+    }
+    // S-type immediate is split into two parts:
+    // imm[11:5] goes to bits 31:25
+    // imm[4:0] goes to bits 11:7
+    let imm_bits = imm as u32 & 0xFFF;
+    let imm_11_5 = (imm_bits >> 5) & 0x7F;
+    let imm_4_0 = imm_bits & 0x1F;
+
+    Ok(opcode
+        | (imm_4_0 << IMM_S_4_0_SHIFT)
+        | (funct3 << FUNCT3_SHIFT)
+        | ((rs1 as u32) << RS1_SHIFT)
+        | ((rs2 as u32) << RS2_SHIFT)
+        | (imm_11_5 << IMM_S_11_5_SHIFT))
 }

@@ -35,20 +35,20 @@ fn trait_compatibility() {
 #[test]
 fn via_instruction() {
     // Test actual error generation via instruction encoding
-    let instr = Instruction::Sb {
+    let instr = Instruction::Beq {
         rs1: 1,
         rs2: 2,
         imm: 100,
     };
     match instr.encode() {
-        Err(EncodeError::NotImplemented("Sb")) => {
+        Err(EncodeError::NotImplemented("Beq")) => {
             // Test that we can display the actual error
-            let error_display = format!("{}", EncodeError::NotImplemented("Sb"));
+            let error_display = format!("{}", EncodeError::NotImplemented("Beq"));
             assert_eq!(
                 error_display,
-                "Encoding not implemented for instruction: Sb"
+                "Encoding not implemented for instruction: Beq"
             );
         }
-        _ => panic!("Expected NotImplemented error for Sb instruction"),
+        _ => panic!("Expected NotImplemented error for Beq instruction"),
     }
 }

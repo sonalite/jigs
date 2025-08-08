@@ -13,7 +13,8 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ Implement std::error::Error and std::fmt::Display for EncodeError
 - ✅ Create helper function encode_r_type() for R-type instructions (with register bounds checking)
 - ✅ Create helper function encode_i_type() for I-type instructions (with register and immediate bounds checking)
-- 🚧 Create helper functions for S, B, U, and J formats as needed
+- ✅ Create helper function encode_s_type() for S-type instructions (with register and immediate bounds checking)
+- 🚧 Create helper functions for B, U, and J formats as needed
 - ✅ Add comprehensive test suite structure (roundtrip tests in src/tests/instruction/roundtrip/)
 
 ### R-Type Instruction Encoding ✅
@@ -46,10 +47,10 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ LBU instruction
 - ✅ LHU instruction
 
-### Store Instruction Encoding 📋
-- 📋 SB instruction
-- 📋 SH instruction
-- 📋 SW instruction
+### Store Instruction Encoding ✅
+- ✅ SB instruction
+- ✅ SH instruction
+- ✅ SW instruction
 
 ### Branch Instruction Encoding 📋
 - 📋 BEQ instruction
@@ -114,15 +115,15 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - **R-Type Instructions Complete**: All 10 R-type instructions (ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND) now have full encoding support with comprehensive roundtrip tests
 - **I-Type Instructions Complete**: All 9 I-type instructions (ADDI, SLTI, SLTIU, XORI, ORI, ANDI, SLLI, SRLI, SRAI) now have full encoding support with comprehensive roundtrip tests
 - **Load Instructions Complete**: All 5 load instructions (LB, LH, LW, LBU, LHU) now have full encoding support using the same encode_i_type() helper since they share the I-type format with opcode 0x03
+- **Store Instructions Complete**: All 3 store instructions (SB, SH, SW) now have full encoding support using the new encode_s_type() helper with opcode 0x23 and appropriate funct3 values
 - **Register Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds/register/` for all R-type instructions
 - **Immediate Bounds Checking**: Added comprehensive tests in `src/tests/instruction/encode/bounds/immediate/` for all I-type instructions, verifying proper InvalidImmediate errors for values outside their valid ranges:
   - Regular I-type instructions (ADDI, SLTI, SLTIU, XORI, ORI, ANDI): -2048 to 2047 range
   - Shift instructions (SLLI, SRLI, SRAI): 0 to 31 range for shamt field
 
 ### Current Test Structure
-After completing all I-type and Load instructions, the test organization is:
+After completing all I-type, Load, and Store instructions, the test organization is:
 - `src/tests/instruction/decode/`: Contains decode-only tests for instructions not yet encoding-enabled
-  - `store/`: All store instruction decode tests  
   - `branch/`: All branch instruction decode tests
   - `jump/`: All jump instruction decode tests
   - `multiply/`: All M-extension decode tests
@@ -133,11 +134,13 @@ After completing all I-type and Load instructions, the test organization is:
   - `register/`: All R-type instructions (add, sub, sll, slt, sltu, xor, srl, sra, or, and)
   - `immediate/`: All I-type instructions (addi, slti, sltiu, xori, ori, andi, slli, srli, srai)
   - `load/`: All load instructions (lb, lh, lw, lbu, lhu)
+  - `store/`: All store instructions (sb, sh, sw)
 - `src/tests/instruction/encode/`: Contains encode-specific tests
   - `unimplemented.rs`: Tests verifying NotImplemented errors for unimplemented instructions
   - `bounds/register/`: Tests verifying InvalidRegister errors for out-of-bounds register values in R-type instructions
   - `bounds/immediate/`: Tests verifying InvalidImmediate errors for out-of-bounds immediate values in all I-type instructions
   - `bounds/load/`: Tests verifying InvalidRegister and InvalidImmediate errors for load instructions
+  - `bounds/store/`: Tests verifying InvalidRegister and InvalidImmediate errors for store instructions
   - `error.rs`: Tests for EncodeError Display and Error trait implementations
 - `src/tests/instruction/display/`: Display formatting tests (unchanged)
 
