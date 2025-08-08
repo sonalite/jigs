@@ -10,7 +10,8 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ Create EncodeError type for error handling
 - 📋 Implement std::error::Error and std::fmt::Display for EncodeError
 - ✅ Create helper function encode_r_type() for R-type instructions
-- 🚧 Create helper functions for I, S, B, U, and J formats as needed
+- ✅ Create helper function encode_i_type() for I-type instructions
+- 🚧 Create helper functions for S, B, U, and J formats as needed
 - ✅ Add comprehensive test suite structure (roundtrip tests in src/tests/instruction/roundtrip/)
 
 ### R-Type Instruction Encoding ✅
@@ -25,8 +26,8 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ OR instruction
 - ✅ AND instruction
 
-### I-Type Instruction Encoding 📋
-- 📋 ADDI instruction
+### I-Type Instruction Encoding 🚧
+- ✅ ADDI instruction
 - 📋 SLTI instruction
 - 📋 SLTIU instruction
 - 📋 XORI instruction
@@ -101,14 +102,16 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - Created `EncodeError` enum with `NotImplemented` variant for gradual implementation
 - Added `encode()` method that returns `Result<u32, EncodeError>`
 - Created `encode_r_type()` helper function at bottom of file for R-type encoding
+- Created `encode_i_type()` helper function for I-type encoding
 - Reorganized tests: `src/tests/instruction/roundtrip/` for combined encode/decode tests
 - Test utility `assert_encode_decode()` in `src/tests/instruction/mod.rs`
 - **R-Type Instructions Complete**: All 10 R-type instructions (ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND) now have full encoding support with comprehensive roundtrip tests
+- **I-Type Instructions Started**: ADDI instruction implemented with full encoding support and roundtrip tests
 
 ### Current Test Structure
-After R-type completion, the test organization is:
+After ADDI implementation, the test organization is:
 - `src/tests/instruction/decode/`: Contains decode-only tests for instructions not yet encoding-enabled
-  - `immediate/`: All I-type decode tests (will migrate when encoding implemented)
+  - `immediate/`: I-type decode tests for instructions without encoding (andi, ori, xori, slti, sltiu, slli, srli, srai)
   - `load/`: All load instruction decode tests
   - `store/`: All store instruction decode tests  
   - `branch/`: All branch instruction decode tests
@@ -119,6 +122,7 @@ After R-type completion, the test organization is:
   - `register/`: Only contains SLL, SLT, SLTU tests (special decode cases not covered by roundtrip)
 - `src/tests/instruction/roundtrip/`: Contains bidirectional encode+decode tests
   - `register/`: All R-type instructions (add, sub, sll, slt, sltu, xor, srl, sra, or, and)
+  - `immediate/`: ADDI instruction (more I-type instructions to be added)
 - `src/tests/instruction/encode/`: Contains encode-specific tests
   - `not_implemented.rs`: Tests verifying NotImplemented errors for unimplemented instructions
 - `src/tests/instruction/display/`: Display formatting tests (unchanged)

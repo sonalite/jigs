@@ -1,16 +1,6 @@
 use crate::instruction::{EncodeError, Instruction};
 
 #[test]
-fn addi() {
-    let inst = Instruction::Addi {
-        rd: 1,
-        rs1: 2,
-        imm: 100,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Addi")));
-}
-
-#[test]
 fn andi() {
     let inst = Instruction::Andi {
         rd: 1,

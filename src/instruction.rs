@@ -866,7 +866,7 @@ impl Instruction {
             Instruction::And { rd, rs1, rs2 } => {
                 Ok(encode_r_type(0x33, *rd, 0x7, *rs1, *rs2, 0x00))
             }
-            Instruction::Addi { .. } => Err(EncodeError::NotImplemented("Addi")),
+            Instruction::Addi { rd, rs1, imm } => Ok(encode_i_type(0x13, *rd, 0x0, *rs1, *imm)),
             Instruction::Andi { .. } => Err(EncodeError::NotImplemented("Andi")),
             Instruction::Ori { .. } => Err(EncodeError::NotImplemented("Ori")),
             Instruction::Xori { .. } => Err(EncodeError::NotImplemented("Xori")),
@@ -916,4 +916,14 @@ fn encode_r_type(opcode: u32, rd: u8, funct3: u32, rs1: u8, rs2: u8, funct7: u32
         | ((rs1 as u32) << RS1_SHIFT)
         | ((rs2 as u32) << RS2_SHIFT)
         | (funct7 << FUNCT7_SHIFT)
+}
+
+/// Encode an I-type instruction
+fn encode_i_type(opcode: u32, rd: u8, funct3: u32, rs1: u8, imm: i32) -> u32 {
+    let imm_bits = (imm & 0xFFF) as u32;
+    opcode
+        | ((rd as u32) << RD_SHIFT)
+        | (funct3 << FUNCT3_SHIFT)
+        | ((rs1 as u32) << RS1_SHIFT)
+        | (imm_bits << IMM_I_SHIFT)
 }
