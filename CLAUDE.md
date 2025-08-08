@@ -50,6 +50,7 @@ The project is structured as a Rust library with an example binary:
 
 ## Code Style Conventions
 - File ordering: module docs → `mod` declarations → `use` statements → constants → types → implementations
+- Module visibility: Only mark modules as public (`pub mod`) if their contents are actually used elsewhere. Test modules should generally use `mod` not `pub mod`
 - Before committing: ensure `cargo build`, `cargo test`, `cargo test --doc`, `cargo tarpaulin`, `cargo fmt -- --check`, and `cargo clippy` produce no warnings
 - Documentation: Keep all module-level documentation up-to-date, including examples in doc comments
 - Error handling: Always use Result for error handling, never panic

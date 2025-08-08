@@ -73,6 +73,8 @@ use std::fmt;
 pub enum EncodeError {
     /// The instruction variant is not yet implemented for encoding
     NotImplemented(&'static str),
+    /// A register value exceeds the valid range (0-31)
+    InvalidRegister(&'static str, u8),
 }
 
 // Masks for extracting instruction fields
@@ -838,34 +840,16 @@ impl Instruction {
     /// implemented for encoding.
     pub fn encode(&self) -> Result<u32, EncodeError> {
         match self {
-            Instruction::Add { rd, rs1, rs2 } => {
-                Ok(encode_r_type(0x33, *rd, 0x0, *rs1, *rs2, 0x00))
-            }
-            Instruction::Sub { rd, rs1, rs2 } => {
-                Ok(encode_r_type(0x33, *rd, 0x0, *rs1, *rs2, 0x20))
-            }
-            Instruction::Sll { rd, rs1, rs2 } => {
-                Ok(encode_r_type(0x33, *rd, 0x1, *rs1, *rs2, 0x00))
-            }
-            Instruction::Xor { rd, rs1, rs2 } => {
-                Ok(encode_r_type(0x33, *rd, 0x4, *rs1, *rs2, 0x00))
-            }
-            Instruction::Or { rd, rs1, rs2 } => Ok(encode_r_type(0x33, *rd, 0x6, *rs1, *rs2, 0x00)),
-            Instruction::Srl { rd, rs1, rs2 } => {
-                Ok(encode_r_type(0x33, *rd, 0x5, *rs1, *rs2, 0x00))
-            }
-            Instruction::Sra { rd, rs1, rs2 } => {
-                Ok(encode_r_type(0x33, *rd, 0x5, *rs1, *rs2, 0x20))
-            }
-            Instruction::Slt { rd, rs1, rs2 } => {
-                Ok(encode_r_type(0x33, *rd, 0x2, *rs1, *rs2, 0x00))
-            }
-            Instruction::Sltu { rd, rs1, rs2 } => {
-                Ok(encode_r_type(0x33, *rd, 0x3, *rs1, *rs2, 0x00))
-            }
-            Instruction::And { rd, rs1, rs2 } => {
-                Ok(encode_r_type(0x33, *rd, 0x7, *rs1, *rs2, 0x00))
-            }
+            Instruction::Add { rd, rs1, rs2 } => encode_r_type(0x33, *rd, 0x0, *rs1, *rs2, 0x00),
+            Instruction::Sub { rd, rs1, rs2 } => encode_r_type(0x33, *rd, 0x0, *rs1, *rs2, 0x20),
+            Instruction::Sll { rd, rs1, rs2 } => encode_r_type(0x33, *rd, 0x1, *rs1, *rs2, 0x00),
+            Instruction::Xor { rd, rs1, rs2 } => encode_r_type(0x33, *rd, 0x4, *rs1, *rs2, 0x00),
+            Instruction::Or { rd, rs1, rs2 } => encode_r_type(0x33, *rd, 0x6, *rs1, *rs2, 0x00),
+            Instruction::Srl { rd, rs1, rs2 } => encode_r_type(0x33, *rd, 0x5, *rs1, *rs2, 0x00),
+            Instruction::Sra { rd, rs1, rs2 } => encode_r_type(0x33, *rd, 0x5, *rs1, *rs2, 0x20),
+            Instruction::Slt { rd, rs1, rs2 } => encode_r_type(0x33, *rd, 0x2, *rs1, *rs2, 0x00),
+            Instruction::Sltu { rd, rs1, rs2 } => encode_r_type(0x33, *rd, 0x3, *rs1, *rs2, 0x00),
+            Instruction::And { rd, rs1, rs2 } => encode_r_type(0x33, *rd, 0x7, *rs1, *rs2, 0x00),
             Instruction::Addi { rd, rs1, imm } => Ok(encode_i_type(0x13, *rd, 0x0, *rs1, *imm)),
             Instruction::Andi { .. } => Err(EncodeError::NotImplemented("Andi")),
             Instruction::Ori { .. } => Err(EncodeError::NotImplemented("Ori")),
@@ -909,13 +893,30 @@ impl Instruction {
 }
 
 /// Encode an R-type instruction
-fn encode_r_type(opcode: u32, rd: u8, funct3: u32, rs1: u8, rs2: u8, funct7: u32) -> u32 {
-    opcode
+fn encode_r_type(
+    opcode: u32,
+    rd: u8,
+    funct3: u32,
+    rs1: u8,
+    rs2: u8,
+    funct7: u32,
+) -> Result<u32, EncodeError> {
+    if rd > 31 {
+        return Err(EncodeError::InvalidRegister("rd", rd));
+    }
+    if rs1 > 31 {
+        return Err(EncodeError::InvalidRegister("rs1", rs1));
+    }
+    if rs2 > 31 {
+        return Err(EncodeError::InvalidRegister("rs2", rs2));
+    }
+
+    Ok(opcode
         | ((rd as u32) << RD_SHIFT)
         | (funct3 << FUNCT3_SHIFT)
         | ((rs1 as u32) << RS1_SHIFT)
         | ((rs2 as u32) << RS2_SHIFT)
-        | (funct7 << FUNCT7_SHIFT)
+        | (funct7 << FUNCT7_SHIFT))
 }
 
 /// Encode an I-type instruction

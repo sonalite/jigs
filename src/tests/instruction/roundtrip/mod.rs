@@ -1,2 +1,2 @@
-pub mod immediate;
-pub mod register;
+mod immediate;
+mod register;

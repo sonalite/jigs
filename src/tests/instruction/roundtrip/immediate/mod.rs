@@ -1,1 +1,1 @@
-pub mod addi;
+mod addi;
