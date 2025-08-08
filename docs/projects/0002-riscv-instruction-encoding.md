@@ -96,9 +96,9 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ All instruction types: Decode tests migrated to roundtrip tests where applicable
 - ✅ M Extension: All decode tests migrated to roundtrip tests with bounds checking
 
-### Documentation 📋
-- 📋 Add encoding examples to documentation
-- 📋 Update module-level documentation in src/instruction.rs to reflect encoding capability
+### Documentation ✅
+- ✅ Add encoding examples to documentation
+- ✅ Update module-level documentation in src/instruction.rs to reflect encoding capability
 - 📋 Update CLAUDE.md to document encoding infrastructure and conventions
 
 ## Implementation Notes

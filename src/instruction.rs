@@ -1,15 +1,24 @@
-//! RISC-V 32-bit instruction decoder implementation.
+//! RISC-V 32-bit instruction encoder and decoder implementation.
 //!
-//! This module provides decoding and display functionality for RISC-V 32-bit instructions
-//! from the RV32IM instruction set (Integer base + Multiplication extension).
+//! This module provides encoding, decoding, and display functionality for RISC-V 32-bit
+//! instructions from the RV32IM instruction set (Integer base + Multiplication extension).
 //!
 //! # Architecture
 //!
+//! ## Decoding
 //! The decoder works by:
 //! 1. Extracting the opcode from bits 0-6 of the instruction word
 //! 2. Using the opcode to determine the instruction format (R, I, S, B, U, J)
 //! 3. Extracting additional fields based on the format
 //! 4. Combining opcode, funct3, and funct7 fields to identify the specific instruction
+//!
+//! ## Encoding
+//! The encoder works by:
+//! 1. Taking an `Instruction` enum variant with its fields
+//! 2. Validating register values are within range (0-31)
+//! 3. Validating immediate values fit within their bit constraints
+//! 4. Combining fields according to the instruction format
+//! 5. Returning a 32-bit instruction word or an error
 //!
 //! # Supported Instructions
 //!
@@ -47,8 +56,9 @@
 //! - Division: DIV, DIVU
 //! - Remainder: REM, REMU
 //!
-//! # Example
+//! # Examples
 //!
+//! ## Decoding
 //! ```
 //! use jigs::Instruction;
 //!
@@ -64,6 +74,58 @@
 //!     }
 //!     _ => panic!("Expected ADD instruction"),
 //! }
+//! ```
+//!
+//! ## Encoding
+//! ```
+//! use jigs::{Instruction, EncodeError};
+//!
+//! // Encode an ADD instruction (add x1, x2, x3)
+//! let instruction = Instruction::Add { rd: 1, rs1: 2, rs2: 3 };
+//! let encoded = instruction.encode().unwrap();
+//! assert_eq!(encoded, 0x003100B3);
+//!
+//! // Encode an ADDI instruction (addi x5, x6, 100)
+//! let instruction = Instruction::Addi { rd: 5, rs1: 6, imm: 100 };
+//! let encoded = instruction.encode().unwrap();
+//! assert_eq!(encoded, 0x06430293);
+//!
+//! // Error handling for invalid register
+//! let instruction = Instruction::Add { rd: 32, rs1: 2, rs2: 3 };
+//! match instruction.encode() {
+//!     Err(EncodeError::InvalidRegister(field, value)) => {
+//!         assert_eq!(field, "rd");
+//!         assert_eq!(value, 32);
+//!     }
+//!     _ => panic!("Expected InvalidRegister error"),
+//! }
+//!
+//! // Error handling for invalid immediate
+//! let instruction = Instruction::Addi { rd: 5, rs1: 6, imm: 4096 };
+//! match instruction.encode() {
+//!     Err(EncodeError::InvalidImmediate(field, value)) => {
+//!         assert_eq!(field, "imm");
+//!         assert_eq!(value, 4096);
+//!     }
+//!     _ => panic!("Expected InvalidImmediate error"),
+//! }
+//! ```
+//!
+//! ## Round-trip Encoding and Decoding
+//! ```
+//! use jigs::Instruction;
+//!
+//! // Start with an instruction
+//! let original = Instruction::Add { rd: 10, rs1: 11, rs2: 12 };
+//!
+//! // Encode it
+//! let encoded = original.encode().unwrap();
+//!
+//! // Decode it back
+//! let decoded = Instruction::decode(encoded);
+//!
+//! // Should match the original
+//! assert_eq!(original, decoded);
 //! ```
 
 use std::fmt;
