@@ -53,73 +53,6 @@ const IMM_J_10_1_SHIFT: u32 = 21;
 const IMM_U_MASK: u32 = 0xFFFFF000; // bits 31:12 -> imm[31:12]
 const IMM_U_SHIFT: u32 = 12;
 
-// Opcodes
-const REG_OPCODE: u32 = 0x33;
-const IMM_OPCODE: u32 = 0x13;
-const LOAD_OPCODE: u32 = 0x03;
-const STORE_OPCODE: u32 = 0x23;
-const BRANCH_OPCODE: u32 = 0x63;
-const JAL_OPCODE: u32 = 0x6F;
-const JALR_OPCODE: u32 = 0x67;
-const LUI_OPCODE: u32 = 0x37;
-const AUIPC_OPCODE: u32 = 0x17;
-const SYSTEM_OPCODE: u32 = 0x73;
-
-// Function codes for I-type instructions
-const ADDI_FUNCT3: u8 = 0x0;
-const SLLI_FUNCT3: u8 = 0x1;
-const JALR_FUNCT3: u8 = 0x0; // JALR uses funct3 = 0x0
-const SLTI_FUNCT3: u8 = 0x2;
-const SLTIU_FUNCT3: u8 = 0x3;
-const XORI_FUNCT3: u8 = 0x4;
-const SRLI_SRAI_FUNCT3: u8 = 0x5; // Shared by SRLI and SRAI
-const ORI_FUNCT3: u8 = 0x6;
-const ANDI_FUNCT3: u8 = 0x7;
-
-// Function codes for Load instructions
-const LB_FUNCT3: u8 = 0x0;
-const LH_FUNCT3: u8 = 0x1;
-const LW_FUNCT3: u8 = 0x2;
-const LBU_FUNCT3: u8 = 0x4;
-const LHU_FUNCT3: u8 = 0x5;
-
-// Function codes for Store instructions
-const SB_FUNCT3: u8 = 0x0;
-const SH_FUNCT3: u8 = 0x1;
-const SW_FUNCT3: u8 = 0x2;
-
-// Function codes for Branch instructions
-const BEQ_FUNCT3: u8 = 0x0;
-const BNE_FUNCT3: u8 = 0x1;
-const BLT_FUNCT3: u8 = 0x4;
-const BGE_FUNCT3: u8 = 0x5;
-const BLTU_FUNCT3: u8 = 0x6;
-const BGEU_FUNCT3: u8 = 0x7;
-
-// Function codes for R-type instructions
-const ADD_SUB_FUNCT3: u8 = 0x0; // Shared by ADD and SUB
-const ADD_FUNCT7: u32 = 0x00;
-const SUB_FUNCT7: u32 = 0x20;
-const SLL_FUNCT3: u8 = 0x1;
-const SLL_FUNCT7: u32 = 0x00;
-const XOR_FUNCT3: u8 = 0x4;
-const XOR_FUNCT7: u32 = 0x00;
-const OR_FUNCT3: u8 = 0x6;
-const OR_FUNCT7: u32 = 0x00;
-const SRL_SRA_FUNCT3: u8 = 0x5; // Shared by SRL and SRA
-const SRL_FUNCT7: u32 = 0x00;
-const SRA_FUNCT7: u32 = 0x20;
-const SLT_FUNCT3: u8 = 0x2;
-const SLT_FUNCT7: u32 = 0x00;
-const SLTU_FUNCT3: u8 = 0x3;
-const SLTU_FUNCT7: u32 = 0x00;
-const AND_FUNCT3: u8 = 0x7;
-const AND_FUNCT7: u32 = 0x00;
-
-// System instruction immediates
-const ECALL_IMM: u32 = 0x000;
-const EBREAK_IMM: u32 = 0x001;
-
 /// RISC-V instruction representation for 32-bit IM
 #[derive(Debug)]
 pub enum Instruction {
@@ -176,6 +109,30 @@ pub enum Instruction {
     ///
     /// Performs bitwise AND between the values in registers `rs1` and `rs2` and stores the result in `rd`.
     And { rd: u8, rs1: u8, rs2: u8 },
+
+    /// Mul instruction
+    ///
+    /// Multiplies the values in registers `rs1` and `rs2`, storing the lower 32 bits of the result in `rd`.
+    /// Part of the M extension.
+    Mul { rd: u8, rs1: u8, rs2: u8 },
+
+    /// Mulh instruction
+    ///
+    /// Multiplies the signed values in registers `rs1` and `rs2`, storing the upper 32 bits of the 64-bit result in `rd`.
+    /// Part of the M extension.
+    Mulh { rd: u8, rs1: u8, rs2: u8 },
+
+    /// Mulhsu instruction
+    ///
+    /// Multiplies the signed value in `rs1` by the unsigned value in `rs2`, storing the upper 32 bits of the 64-bit result in `rd`.
+    /// Part of the M extension.
+    Mulhsu { rd: u8, rs1: u8, rs2: u8 },
+
+    /// Mulhu instruction
+    ///
+    /// Multiplies the unsigned values in registers `rs1` and `rs2`, storing the upper 32 bits of the 64-bit result in `rd`.
+    /// Part of the M extension.
+    Mulhu { rd: u8, rs1: u8, rs2: u8 },
 
     /// Addi instruction
     ///
@@ -376,6 +333,18 @@ impl fmt::Display for Instruction {
             Instruction::And { rd, rs1, rs2 } => {
                 write!(f, "and x{}, x{}, x{}", rd, rs1, rs2)
             }
+            Instruction::Mul { rd, rs1, rs2 } => {
+                write!(f, "mul x{}, x{}, x{}", rd, rs1, rs2)
+            }
+            Instruction::Mulh { rd, rs1, rs2 } => {
+                write!(f, "mulh x{}, x{}, x{}", rd, rs1, rs2)
+            }
+            Instruction::Mulhsu { rd, rs1, rs2 } => {
+                write!(f, "mulhsu x{}, x{}, x{}", rd, rs1, rs2)
+            }
+            Instruction::Mulhu { rd, rs1, rs2 } => {
+                write!(f, "mulhu x{}, x{}, x{}", rd, rs1, rs2)
+            }
             Instruction::Addi { rd, rs1, imm } => {
                 write!(f, "addi x{}, x{}, {}", rd, rs1, imm)
             }
@@ -480,82 +449,45 @@ impl Instruction {
         let opcode = word & OPCODE_MASK;
 
         match opcode {
-            REG_OPCODE => {
+            0x33 => {
+                // R-type instructions
                 let funct3 = (((word & FUNCT3_MASK) >> FUNCT3_SHIFT) & 0x7) as u8;
                 let funct7 = (word & FUNCT7_MASK) >> FUNCT7_SHIFT;
                 let rd = ((word & RD_MASK) >> RD_SHIFT) as u8;
                 let rs1 = ((word & RS1_MASK) >> RS1_SHIFT) as u8;
                 let rs2 = ((word & RS2_MASK) >> RS2_SHIFT) as u8;
 
-                match funct3 {
-                    ADD_SUB_FUNCT3 => {
-                        if funct7 == ADD_FUNCT7 {
-                            Instruction::Add { rd, rs1, rs2 }
-                        } else if funct7 == SUB_FUNCT7 {
-                            Instruction::Sub { rd, rs1, rs2 }
-                        } else {
-                            Instruction::Unsupported(word)
-                        }
-                    }
-                    SLL_FUNCT3 => {
-                        if funct7 == SLL_FUNCT7 {
-                            Instruction::Sll { rd, rs1, rs2 }
-                        } else {
-                            Instruction::Unsupported(word)
-                        }
-                    }
-                    SLT_FUNCT3 => {
-                        if funct7 == SLT_FUNCT7 {
-                            Instruction::Slt { rd, rs1, rs2 }
-                        } else {
-                            Instruction::Unsupported(word)
-                        }
-                    }
-                    SLTU_FUNCT3 => {
-                        if funct7 == SLTU_FUNCT7 {
-                            Instruction::Sltu { rd, rs1, rs2 }
-                        } else {
-                            Instruction::Unsupported(word)
-                        }
-                    }
-                    XOR_FUNCT3 => {
-                        if funct7 == XOR_FUNCT7 {
-                            Instruction::Xor { rd, rs1, rs2 }
-                        } else {
-                            Instruction::Unsupported(word)
-                        }
-                    }
-                    SRL_SRA_FUNCT3 => {
-                        if funct7 == SRL_FUNCT7 {
-                            Instruction::Srl { rd, rs1, rs2 }
-                        } else if funct7 == SRA_FUNCT7 {
-                            Instruction::Sra { rd, rs1, rs2 }
-                        } else {
-                            Instruction::Unsupported(word)
-                        }
-                    }
-                    OR_FUNCT3 => {
-                        if funct7 == OR_FUNCT7 {
-                            Instruction::Or { rd, rs1, rs2 }
-                        } else {
-                            Instruction::Unsupported(word)
-                        }
-                    }
-                    AND_FUNCT3 => {
-                        if funct7 == AND_FUNCT7 {
-                            Instruction::And { rd, rs1, rs2 }
-                        } else {
-                            Instruction::Unsupported(word)
-                        }
-                    }
-                    _ => {
-                        // This case is unreachable since funct3 is masked to 3 bits (0-7)
-                        // and all values are handled above
-                        unreachable!()
-                    }
+                match (funct3, funct7) {
+                    // Arithmetic operations
+                    (0x0, 0x00) => Instruction::Add { rd, rs1, rs2 }, // ADD
+                    (0x0, 0x20) => Instruction::Sub { rd, rs1, rs2 }, // SUB
+
+                    // Shift operations
+                    (0x1, 0x00) => Instruction::Sll { rd, rs1, rs2 }, // SLL
+                    (0x5, 0x00) => Instruction::Srl { rd, rs1, rs2 }, // SRL
+                    (0x5, 0x20) => Instruction::Sra { rd, rs1, rs2 }, // SRA
+
+                    // Comparison operations
+                    (0x2, 0x00) => Instruction::Slt { rd, rs1, rs2 }, // SLT
+                    (0x3, 0x00) => Instruction::Sltu { rd, rs1, rs2 }, // SLTU
+
+                    // Logical operations
+                    (0x4, 0x00) => Instruction::Xor { rd, rs1, rs2 }, // XOR
+                    (0x6, 0x00) => Instruction::Or { rd, rs1, rs2 },  // OR
+                    (0x7, 0x00) => Instruction::And { rd, rs1, rs2 }, // AND
+
+                    // Multiplication operations (M extension)
+                    (0x0, 0x01) => Instruction::Mul { rd, rs1, rs2 }, // MUL
+                    (0x1, 0x01) => Instruction::Mulh { rd, rs1, rs2 }, // MULH
+                    (0x2, 0x01) => Instruction::Mulhsu { rd, rs1, rs2 }, // MULHSU
+                    (0x3, 0x01) => Instruction::Mulhu { rd, rs1, rs2 }, // MULHU
+
+                    // Unknown combination
+                    _ => Instruction::Unsupported(word),
                 }
             }
-            IMM_OPCODE => {
+            0x13 => {
+                // I-type immediate instructions
                 let funct3 = (((word & FUNCT3_MASK) >> FUNCT3_SHIFT) & 0x7) as u8;
                 let rd = ((word & RD_MASK) >> RD_SHIFT) as u8;
                 let rs1 = ((word & RS1_MASK) >> RS1_SHIFT) as u8;
@@ -569,10 +501,9 @@ impl Instruction {
                 };
 
                 match funct3 {
-                    ADDI_FUNCT3 => Instruction::Addi { rd, rs1, imm },
-                    SLLI_FUNCT3 => {
-                        // For SLLI, the immediate encodes the shift amount in lower 5 bits
-                        // and the upper 7 bits must be 0x00
+                    0x0 => Instruction::Addi { rd, rs1, imm }, // ADDI
+                    0x1 => {
+                        // SLLI: shift amount in lower 5 bits, upper 7 bits must be 0x00
                         let shamt = (imm_raw & 0x1F) as u8;
                         let upper_bits = (imm_raw >> 5) & 0x7F;
                         if upper_bits == 0x00 {
@@ -581,32 +512,29 @@ impl Instruction {
                             Instruction::Unsupported(word)
                         }
                     }
-                    SLTI_FUNCT3 => Instruction::Slti { rd, rs1, imm },
-                    SLTIU_FUNCT3 => Instruction::Sltiu { rd, rs1, imm },
-                    XORI_FUNCT3 => Instruction::Xori { rd, rs1, imm },
-                    SRLI_SRAI_FUNCT3 => {
-                        // For SRLI/SRAI, the immediate encodes the shift amount in lower 5 bits
-                        // and the upper 7 bits determine which instruction (0x00 for SRLI, 0x20 for SRAI)
+                    0x2 => Instruction::Slti { rd, rs1, imm }, // SLTI
+                    0x3 => Instruction::Sltiu { rd, rs1, imm }, // SLTIU
+                    0x4 => Instruction::Xori { rd, rs1, imm }, // XORI
+                    0x5 => {
+                        // SRLI/SRAI: shift amount in lower 5 bits
+                        // upper 7 bits: 0x00 for SRLI, 0x20 for SRAI
                         let shamt = (imm_raw & 0x1F) as u8;
                         let upper_bits = (imm_raw >> 5) & 0x7F;
                         if upper_bits == 0x00 {
-                            Instruction::Srli { rd, rs1, shamt }
+                            Instruction::Srli { rd, rs1, shamt } // SRLI
                         } else if upper_bits == 0x20 {
-                            Instruction::Srai { rd, rs1, shamt }
+                            Instruction::Srai { rd, rs1, shamt } // SRAI
                         } else {
                             Instruction::Unsupported(word)
                         }
                     }
-                    ORI_FUNCT3 => Instruction::Ori { rd, rs1, imm },
-                    ANDI_FUNCT3 => Instruction::Andi { rd, rs1, imm },
-                    _ => {
-                        // This case is unreachable since funct3 is masked to 3 bits (0-7)
-                        // and all values 0-7 are handled above
-                        unreachable!()
-                    }
+                    0x6 => Instruction::Ori { rd, rs1, imm }, // ORI
+                    0x7 => Instruction::Andi { rd, rs1, imm }, // ANDI
+                    _ => Instruction::Unsupported(word),
                 }
             }
-            LOAD_OPCODE => {
+            0x03 => {
+                // Load instructions
                 let funct3 = (((word & FUNCT3_MASK) >> FUNCT3_SHIFT) & 0x7) as u8;
                 let rd = ((word & RD_MASK) >> RD_SHIFT) as u8;
                 let rs1 = ((word & RS1_MASK) >> RS1_SHIFT) as u8;
@@ -620,15 +548,16 @@ impl Instruction {
                 };
 
                 match funct3 {
-                    LB_FUNCT3 => Instruction::Lb { rd, rs1, imm },
-                    LH_FUNCT3 => Instruction::Lh { rd, rs1, imm },
-                    LW_FUNCT3 => Instruction::Lw { rd, rs1, imm },
-                    LBU_FUNCT3 => Instruction::Lbu { rd, rs1, imm },
-                    LHU_FUNCT3 => Instruction::Lhu { rd, rs1, imm },
+                    0x0 => Instruction::Lb { rd, rs1, imm },  // LB
+                    0x1 => Instruction::Lh { rd, rs1, imm },  // LH
+                    0x2 => Instruction::Lw { rd, rs1, imm },  // LW
+                    0x4 => Instruction::Lbu { rd, rs1, imm }, // LBU
+                    0x5 => Instruction::Lhu { rd, rs1, imm }, // LHU
                     _ => Instruction::Unsupported(word),
                 }
             }
-            STORE_OPCODE => {
+            0x23 => {
+                // Store instructions
                 let funct3 = (((word & FUNCT3_MASK) >> FUNCT3_SHIFT) & 0x7) as u8;
                 let rs1 = ((word & RS1_MASK) >> RS1_SHIFT) as u8;
                 let rs2 = ((word & RS2_MASK) >> RS2_SHIFT) as u8;
@@ -645,13 +574,14 @@ impl Instruction {
                 };
 
                 match funct3 {
-                    SB_FUNCT3 => Instruction::Sb { rs1, rs2, imm },
-                    SH_FUNCT3 => Instruction::Sh { rs1, rs2, imm },
-                    SW_FUNCT3 => Instruction::Sw { rs1, rs2, imm },
+                    0x0 => Instruction::Sb { rs1, rs2, imm }, // SB
+                    0x1 => Instruction::Sh { rs1, rs2, imm }, // SH
+                    0x2 => Instruction::Sw { rs1, rs2, imm }, // SW
                     _ => Instruction::Unsupported(word),
                 }
             }
-            BRANCH_OPCODE => {
+            0x63 => {
+                // Branch instructions
                 let funct3 = (((word & FUNCT3_MASK) >> FUNCT3_SHIFT) & 0x7) as u8;
                 let rs1 = ((word & RS1_MASK) >> RS1_SHIFT) as u8;
                 let rs2 = ((word & RS2_MASK) >> RS2_SHIFT) as u8;
@@ -676,16 +606,17 @@ impl Instruction {
                 };
 
                 match funct3 {
-                    BEQ_FUNCT3 => Instruction::Beq { rs1, rs2, imm },
-                    BNE_FUNCT3 => Instruction::Bne { rs1, rs2, imm },
-                    BLT_FUNCT3 => Instruction::Blt { rs1, rs2, imm },
-                    BGE_FUNCT3 => Instruction::Bge { rs1, rs2, imm },
-                    BLTU_FUNCT3 => Instruction::Bltu { rs1, rs2, imm },
-                    BGEU_FUNCT3 => Instruction::Bgeu { rs1, rs2, imm },
+                    0x0 => Instruction::Beq { rs1, rs2, imm },  // BEQ
+                    0x1 => Instruction::Bne { rs1, rs2, imm },  // BNE
+                    0x4 => Instruction::Blt { rs1, rs2, imm },  // BLT
+                    0x5 => Instruction::Bge { rs1, rs2, imm },  // BGE
+                    0x6 => Instruction::Bltu { rs1, rs2, imm }, // BLTU
+                    0x7 => Instruction::Bgeu { rs1, rs2, imm }, // BGEU
                     _ => Instruction::Unsupported(word),
                 }
             }
-            JAL_OPCODE => {
+            0x6F => {
+                // JAL (Jump and Link)
                 // JAL is J-type instruction
                 let rd = ((word & RD_MASK) >> RD_SHIFT) as u8;
 
@@ -711,7 +642,8 @@ impl Instruction {
 
                 Instruction::Jal { rd, imm }
             }
-            JALR_OPCODE => {
+            0x67 => {
+                // JALR (Jump and Link Register)
                 // JALR is I-type instruction with funct3 = 0
                 let funct3 = (((word & FUNCT3_MASK) >> FUNCT3_SHIFT) & 0x7) as u8;
                 let rd = ((word & RD_MASK) >> RD_SHIFT) as u8;
@@ -726,13 +658,15 @@ impl Instruction {
                     imm_raw as i32
                 };
 
-                if funct3 == JALR_FUNCT3 {
+                if funct3 == 0x0 {
+                    // JALR uses funct3 = 0x0
                     Instruction::Jalr { rd, rs1, imm }
                 } else {
                     Instruction::Unsupported(word)
                 }
             }
-            LUI_OPCODE => {
+            0x37 => {
+                // LUI (Load Upper Immediate)
                 // LUI is U-type instruction
                 let rd = ((word & RD_MASK) >> RD_SHIFT) as u8;
 
@@ -742,7 +676,8 @@ impl Instruction {
 
                 Instruction::Lui { rd, imm }
             }
-            AUIPC_OPCODE => {
+            0x17 => {
+                // AUIPC (Add Upper Immediate to PC)
                 // AUIPC is U-type instruction
                 let rd = ((word & RD_MASK) >> RD_SHIFT) as u8;
 
@@ -752,7 +687,8 @@ impl Instruction {
 
                 Instruction::Auipc { rd, imm }
             }
-            SYSTEM_OPCODE => {
+            0x73 => {
+                // System instructions
                 // System instructions - check the immediate field to determine which one
                 // For ECALL and EBREAK, funct3 must be 0 and rs1, rd must be 0
                 let funct3 = (((word & FUNCT3_MASK) >> FUNCT3_SHIFT) & 0x7) as u8;
@@ -762,8 +698,8 @@ impl Instruction {
 
                 if funct3 == 0 && rd == 0 && rs1 == 0 {
                     match imm {
-                        ECALL_IMM => Instruction::Ecall,
-                        EBREAK_IMM => Instruction::Ebreak,
+                        0x000 => Instruction::Ecall,  // ECALL
+                        0x001 => Instruction::Ebreak, // EBREAK
                         _ => Instruction::Unsupported(word),
                     }
                 } else {
