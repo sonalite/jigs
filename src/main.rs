@@ -1,8 +1,4 @@
-mod instruction;
-#[cfg(test)]
-mod tests;
-
-use instruction::Instruction;
+use jigs::Instruction;
 
 fn main() {
     // Example: decode and display an ADD instruction

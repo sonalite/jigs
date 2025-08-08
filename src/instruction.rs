@@ -1,3 +1,71 @@
+//! RISC-V 32-bit instruction decoder implementation.
+//!
+//! This module provides decoding and display functionality for RISC-V 32-bit instructions
+//! from the RV32IM instruction set (Integer base + Multiplication extension).
+//!
+//! # Architecture
+//!
+//! The decoder works by:
+//! 1. Extracting the opcode from bits 0-6 of the instruction word
+//! 2. Using the opcode to determine the instruction format (R, I, S, B, U, J)
+//! 3. Extracting additional fields based on the format
+//! 4. Combining opcode, funct3, and funct7 fields to identify the specific instruction
+//!
+//! # Supported Instructions
+//!
+//! ## R-Type (Register-to-Register)
+//! - Arithmetic: ADD, SUB
+//! - Logical: AND, OR, XOR
+//! - Shifts: SLL, SRL, SRA
+//! - Comparison: SLT, SLTU
+//!
+//! ## I-Type (Immediate)
+//! - Arithmetic: ADDI
+//! - Logical: ANDI, ORI, XORI
+//! - Shifts: SLLI, SRLI, SRAI
+//! - Comparison: SLTI, SLTIU
+//! - Loads: LB, LH, LW, LBU, LHU
+//! - Jump: JALR
+//!
+//! ## S-Type (Store)
+//! - SB, SH, SW
+//!
+//! ## B-Type (Branch)
+//! - BEQ, BNE, BLT, BGE, BLTU, BGEU
+//!
+//! ## U-Type (Upper Immediate)
+//! - LUI, AUIPC
+//!
+//! ## J-Type (Jump)
+//! - JAL
+//!
+//! ## System
+//! - ECALL, EBREAK
+//!
+//! ## M Extension (Multiply/Divide)
+//! - Multiplication: MUL, MULH, MULHSU, MULHU
+//! - Division: DIV, DIVU
+//! - Remainder: REM, REMU
+//!
+//! # Example
+//!
+//! ```
+//! use jigs::Instruction;
+//!
+//! // Decode an ADD instruction (add x1, x2, x3)
+//! let instruction_word = 0x003100B3;
+//! let instruction = Instruction::decode(instruction_word);
+//!
+//! match instruction {
+//!     Instruction::Add { rd, rs1, rs2 } => {
+//!         assert_eq!(rd, 1);
+//!         assert_eq!(rs1, 2);
+//!         assert_eq!(rs2, 3);
+//!     }
+//!     _ => panic!("Expected ADD instruction"),
+//! }
+//! ```
+
 use std::fmt;
 
 // Masks for extracting instruction fields

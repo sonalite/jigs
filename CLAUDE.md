@@ -11,14 +11,16 @@ Jigs - A high-performance RISC-V runtime for ARM64 systems with gas-metered exec
 Currently implements decoding and display formatting for 32-bit RISC-V instructions, with encoding, JIT compilation, and gas tracking planned.
 
 ## Architecture
-The project implements a RISC-V instruction decoder with:
+The project is structured as a Rust library with an example binary:
+- **src/lib.rs**: Library entry point that exports public APIs
+- **src/main.rs**: Example binary demonstrating instruction decoding
 - **src/instruction.rs**: Core instruction representation and decoding logic
-  - `Instruction` enum for different instruction types (R-type, I-type, S-type, B-type, and Unsupported)
+  - `Instruction` enum with variants for each RISC-V instruction (Add, Sub, etc.)
   - Decode method that extracts fields from 32-bit instruction words using bitmasking
   - Display trait implementation for assembly-style output
-  - Supports: arithmetic ops, logical ops, shifts, loads, stores, and branches
+  - Supports RV32IM: base integer instructions plus M extension (multiply/divide)
 - **src/tests/**: Comprehensive test suite organized by functionality
-  - `decode/`: Tests for instruction decoding (register, immediate, load, store, branch)
+  - `decode/`: Tests for instruction decoding (register, immediate, load, store, branch, multiply, jump, system, utype)
   - `display/`: Tests for instruction display formatting
 
 ## Commands
@@ -28,6 +30,7 @@ The project implements a RISC-V instruction decoder with:
 - Run single test: `cargo test tests::instruction::decode::add::basic`
 - Test specific functionality: `cargo test instruction::decode`
 - Test with output: `cargo test -- --nocapture`
+- Run documentation tests: `cargo test --doc`
 - Code coverage: `cargo tarpaulin`
 - Format code: `cargo fmt`
 - Check formatting: `cargo fmt -- --check`
@@ -47,12 +50,23 @@ The project implements a RISC-V instruction decoder with:
 
 ## Code Style Conventions
 - File ordering: module docs → `mod` declarations → `use` statements → constants → types → implementations
-- Before committing: ensure `cargo build`, `cargo test`, `cargo tarpaulin`, `cargo fmt -- --check`, and `cargo clippy` produce no warnings
+- Before committing: ensure `cargo build`, `cargo test`, `cargo test --doc`, `cargo tarpaulin`, `cargo fmt -- --check`, and `cargo clippy` produce no warnings
+- Documentation: Keep all module-level documentation up-to-date, including examples in doc comments
 - Error handling: Always use Result for error handling, never panic
 
+## Pre-Commit Checklist
+Before committing any changes, ensure all of the following pass without warnings:
+1. `cargo build` - Code compiles successfully
+2. `cargo test` - All unit tests pass
+3. `cargo test --doc` - All documentation tests pass
+4. `cargo fmt -- --check` - Code is properly formatted
+5. `cargo clippy` - No linting issues
+6. `cargo tarpaulin` - Code coverage hasn't decreased
+7. Review all module-level documentation to ensure it's up-to-date
+8. Update CLAUDE.md Architecture section if structure changed
+
 ## Git Commit Conventions
-- Always run `cargo fmt` immediately before committing to check for any formatting changes
-- Review and update the Architecture section in CLAUDE.md to ensure it reflects the current codebase structure
+- Always run the full pre-commit checklist before committing
 - Focus commit messages on the primary functionality (e.g., "Implement XOR instruction" not "Update tests and add XOR")
 - Ask for user confirmation before committing to ensure accuracy
 
