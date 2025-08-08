@@ -854,7 +854,9 @@ impl Instruction {
             Instruction::Slt { rd, rs1, rs2 } => {
                 Ok(encode_r_type(0x33, *rd, 0x2, *rs1, *rs2, 0x00))
             }
-            Instruction::Sltu { .. } => Err(EncodeError::NotImplemented("Sltu")),
+            Instruction::Sltu { rd, rs1, rs2 } => {
+                Ok(encode_r_type(0x33, *rd, 0x3, *rs1, *rs2, 0x00))
+            }
             Instruction::And { .. } => Err(EncodeError::NotImplemented("And")),
             Instruction::Addi { .. } => Err(EncodeError::NotImplemented("Addi")),
             Instruction::Andi { .. } => Err(EncodeError::NotImplemented("Andi")),

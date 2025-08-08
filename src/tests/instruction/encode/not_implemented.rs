@@ -41,16 +41,6 @@ fn sra() {
 }
 
 #[test]
-fn sltu() {
-    let inst = Instruction::Sltu {
-        rd: 1,
-        rs1: 2,
-        rs2: 3,
-    };
-    assert_eq!(inst.encode(), Err(EncodeError::NotImplemented("Sltu")));
-}
-
-#[test]
 fn and() {
     let inst = Instruction::And {
         rd: 1,

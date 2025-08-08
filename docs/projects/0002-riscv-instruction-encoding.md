@@ -18,7 +18,7 @@ Implementation of RISC-V 32-bit instruction encoder to convert Instruction enum 
 - ✅ SUB instruction  
 - ✅ SLL instruction
 - ✅ SLT instruction
-- 📋 SLTU instruction
+- ✅ SLTU instruction
 - 📋 XOR instruction
 - 📋 SRL instruction
 - 📋 SRA instruction
