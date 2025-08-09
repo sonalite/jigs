@@ -1,7 +1,7 @@
 # Project 0003: RISC-V to ARM64 JIT Runtime 📋
 
 ## Overview
-Implementation of a Just-In-Time (JIT) compiler runtime that translates RISC-V machine code to native ARM64 instructions and executes them. This enables running RISC-V programs directly on ARM64 hardware with near-native performance using a single-pass compilation strategy.
+Implementation of a Just-In-Time (JIT) compiler runtime that translates RISC-V 32-bit IM (Integer + Multiply/Divide) machine code to native ARM64 instructions and executes them. This enables running RISC-V programs directly on ARM64 hardware with near-native performance using a single-pass compilation strategy. The runtime is designed for single-threaded execution only.
 
 ## Architecture
 
@@ -15,6 +15,8 @@ Implementation of a Just-In-Time (JIT) compiler runtime that translates RISC-V m
 - **Generic syscall handler**: Avoids dynamic dispatch overhead
 - **PC mapping table**: Enables efficient indirect jump handling
 - **Stubbed implementation**: Allows incremental development and testing
+- **Single-threaded execution**: Runtime designed for single-threaded operation only
+- **ARM64-only target**: Runtime enforces ARM64 architecture requirement at compile time
 
 ### Register Mapping (RISC-V → ARM64)
 - **x0**: Always zero (uses ARM64 xzr when needed)
@@ -22,6 +24,12 @@ Implementation of a Just-In-Time (JIT) compiler runtime that translates RISC-V m
 - **x30**: Stored as `Box<u32>` in memory, spilled on write, loaded on read (preserves ARM64 link register)
 - **x31**: Maps to ARM64 x31 (normal register)
 - **ARM64 xzr**: Only used when instructions explicitly need zero
+
+### Code Generation Security
+- **W^X Protection**: Code buffer starts as writable for JIT compilation, then marked execute-only with `mprotect()`
+- **MAP_JIT Flag**: On macOS, memory mapped with `MAP_JIT` flag to allow JIT compilation
+- **Instruction Alignment**: All ARM64 instructions must be 32-bit (4-byte) aligned in the code buffer
+- **Platform Check**: Compile-time `#[cfg(target_arch = "aarch64")]` ensures code only compiles on ARM64
 
 ### Memory Layout
 
@@ -36,7 +44,7 @@ Implementation of a Just-In-Time (JIT) compiler runtime that translates RISC-V m
 
 #### Other Memory Components
 - **Code Buffer**: Fixed size for JIT-compiled ARM64 code, made executable, tracks emission position
-- **Spill Stack**: Separate from VM memory, VM tracks stack depth with max size, native code increments/checks bounds
+- **Spill Stack**: Separate from VM memory, always contains at least one register set at top, VM tracks stack depth with max size, native code increments/checks bounds
 - **x30 Storage**: `Box<u32>` with direct memory address accessible from JIT code
 - **PC Mapping Table**: RISC-V PC to ARM64 code offset mapping for indirect jumps
 
@@ -61,7 +69,7 @@ Implementation of a Just-In-Time (JIT) compiler runtime that translates RISC-V m
 - Memory system as `Box<Memory>` with pointer passed to native code
 - Fixed-size code buffer and memory allocations
 - PC to code offset mapping table
-- No RISC-V register storage (except x30)
+- Register stack always maintains at least one set of saved registers at the top for `read_register` access
 
 ### Memory Management (`src/memory.rs`)
 - **Memory Struct**: Stored in `Box<Memory>` for stable pointer access from native code
@@ -94,25 +102,36 @@ Implementation of a Just-In-Time (JIT) compiler runtime that translates RISC-V m
 ### Translator (`src/translator.rs`)
 - Per-instruction translation methods (initially stubbed returning `NotImplemented`)
 - Special handling for x0 (zero), x30 (memory access), branches, JALR, ECALL/EBREAK
+- **Divide by Zero Handling**: RISC-V DIV/DIVU/REM/REMU instructions require special handling:
+  - DIV/DIVU: Returns all bits set (0xFFFFFFFF) when divisor is zero
+  - REM/REMU: Returns dividend when divisor is zero
+  - ARM64 integer division by zero returns zero (not an exception), so must check explicitly and return correct RISC-V semantics
 
 ### Executor (`src/executor.rs`)
 - JIT compilation on first function call
 - Compilation cache using PC to code pointer mapping
 - VM entry/exit sequences with ARM64 register save/restore
 - Direct jump to compiled code
+- **Register preservation**: Registers saved to spill stack on entry and remain at top of stack after execution for `read_register` access
+
+### VM Configuration
+- **Configuration Object**: `Config` struct passed to `new()` containing:
+  - `max_memory_pages: u16` - Maximum number of 4KB pages (default: 16384 = 64MB)
+  - `max_code_size: usize` - Maximum JIT code buffer size (default: 1MB)
+  - `max_stack_depth: usize` - Maximum spill stack depth (default: 64KB)
+- **Validation**: Configuration validated at VM creation time
 
 ### Public API
 ```rust
-pub fn new<S>(memory_size: usize, code_buffer_size: usize, syscall_handler: S) -> Self
+pub fn new<S>(config: Config, syscall_handler: S) -> Result<Self, VmError>
     where S: Fn(&mut VirtualMachine<S>, u32) -> Result<(), RuntimeError>
 
-pub fn load_program(&mut self, code: &[u8], address: u32)
-pub fn call_function(&mut self, address: u32, args: &[u32]) -> Result<u32>
+pub fn load_program(&mut self, code: &[u8], address: u32) -> Result<(), VmError>
+pub fn call_function(&mut self, address: u32, args: &[u32]) -> Result<u32, RuntimeError>
 pub fn read_register(&self, reg: u8) -> u32
 pub fn write_register(&mut self, reg: u8, value: u32)
-pub fn read_memory(&self, address: u32, size: usize) -> Result<Vec<u8>>
-pub fn write_memory(&mut self, address: u32, data: &[u8]) -> Result<()>
-pub fn run(&mut self) -> Result<RunResult>
+pub fn read_memory(&self, address: u32, size: usize) -> Result<Vec<u8>, MemoryError>
+pub fn write_memory(&mut self, address: u32, data: &[u8]) -> Result<(), MemoryError>
 ```
 
 ### Testing Structure
