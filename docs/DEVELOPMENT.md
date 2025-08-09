@@ -46,7 +46,7 @@ Before committing any changes, ensure all of the following pass without warnings
 5. `cargo clippy` - No linting issues
 6. `cargo tarpaulin` - Code coverage hasn't decreased
 7. Review all module-level documentation to ensure it's up-to-date
-8. Update CLAUDE.md Architecture section if structure changed
+8. Update docs/ARCHITECTURE.md if project structure changed
 
 ## Git Commit Conventions
 - Always run the full pre-commit checklist before committing
