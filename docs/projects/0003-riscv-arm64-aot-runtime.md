@@ -95,12 +95,6 @@ Implementation of an Ahead-of-Time (AOT) compiler runtime that translates RISC-V
 - Per-instruction translation methods (initially stubbed returning `NotImplemented`)
 - Special handling for x0 (zero), x30 (memory access), branches, JALR, ECALL/EBREAK
 
-### Executor (`src/executor.rs`)
-- Direct execution of pre-compiled ARM64 code
-- PC to code pointer lookup for function entry
-- VM entry/exit sequences with ARM64 register save/restore
-- Direct jump to compiled code
-
 ### Function Call Mechanism (`call_function`)
 - **Entry**: Save ARM64 callee-saved registers (x19-x28, x29, x30) and stack pointer
 - **Execute**: Jump to compiled code at target address
