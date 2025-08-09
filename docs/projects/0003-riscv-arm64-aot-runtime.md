@@ -79,21 +79,25 @@ Implementation of an Ahead-of-Time (AOT) compiler runtime that translates RISC-V
 - **Reset Functionality**: Clear mapped pages and reset page table between executions
 - **Sparse Mapping**: Only allocate pages that are actually accessed (lazy allocation)
 
-### ARM64 Code Generation (`src/arm64/`)
-- **`mod.rs`**: Module organization, register constants, types
-- **`encoder.rs`**: Instruction encoding helpers, register/immediate encoding, branch offsets
-- **`emitter.rs`**: Code emission to fixed buffer, write position tracking, forward branch patching
+### ARM64 Encoder (`src/encoder.rs`)
+- Instruction encoding helpers for ARM64 machine code generation
+- Register and immediate value encoding
+- Branch offset calculation and encoding
+- ARM64 instruction format constants and utilities
 
 ### Compiler (`src/compiler.rs`)
-- Tracks current RISC-V PC during compilation
-- Maintains PC to ARM64 offset mapping
-- Forward branch fixup list
-- Single-pass translation flow
-- Pointer to x30 storage and spill stack
+- **Compilation orchestration**: Manages single-pass RISC-V to ARM64 translation
+- **Code emission**: Writes ARM64 instructions directly to fixed code buffer
+- **PC tracking**: Maintains current RISC-V PC and PC to ARM64 offset mapping
+- **Branch patching**: Forward branch fixup list and resolution
+- **Buffer management**: Write position tracking and bounds checking
+- **Special registers**: Pointer to x30 storage and spill stack management
+- Calls translator for per-instruction translation logic
 
 ### Translator (`src/translator.rs`)
 - Per-instruction translation methods (initially stubbed returning `NotImplemented`)
 - Special handling for x0 (zero), x30 (memory access), branches, JALR, ECALL/EBREAK
+- Returns ARM64 instruction sequences for compiler to emit
 
 ### Function Call Mechanism (`call_function`)
 - **Entry**: Save ARM64 callee-saved registers (x19-x28, x29, x30) and stack pointer
@@ -114,47 +118,122 @@ pub fn write_memory(&mut self, address: u32, data: &[u8]) -> Result<()>
 pub fn run(&mut self) -> Result<RunResult>
 ```
 
-### Testing Structure
+### Testing
+
+Coverage must be maintained at 100% for all new files.
+
+#### Structure
+
 ```
-src/tests/vm/
-├── vm.rs              # VM creation and API
-├── registers.rs       # Register operations, x30 special handling
-├── memory.rs          # Memory operations and boundaries
-├── performance.rs     # Performance benchmarks
-├── programs.rs        # Complete program execution
-└── instructions/      # Per-instruction test coverage
-    ├── register/      # R-type instructions
-    ├── immediate/     # I-type instructions
-    ├── load/          # Load instructions with alignment
-    ├── store/         # Store instructions with alignment
-    ├── branch/        # Branch instructions with PC mapping
-    ├── upper/         # U-type (LUI, AUIPC)
-    ├── jump/          # Jump instructions including JALR
-    ├── multiply/      # M extension
-    └── system/        # ECALL and EBREAK
+src/tests/
+├── encoder/           # ARM64 encoder module tests
+│   ├── instructions/  # ARM64 instruction encoding
+│   │   ├── arithmetic.rs  # ADD, SUB, MUL, etc.
+│   │   ├── logical.rs     # AND, ORR, EOR, MVN
+│   │   ├── shifts.rs      # LSL, LSR, ASR, ROR
+│   │   ├── branches.rs    # B, BL, BR, BLR, RET
+│   │   ├── loads.rs       # LDR, LDRB, LDRH, LDRSW
+│   │   ├── stores.rs      # STR, STRB, STRH
+│   │   └── moves.rs       # MOV, MOVZ, MOVK, MOVN
+│   ├── registers.rs   # Register encoding (X0-X31, SP, XZR)
+│   ├── immediates.rs  # Immediate value encoding and validation
+│   └── offsets.rs     # Branch offset calculations
+│
+├── memory/            # Memory system tests
+│   ├── pages.rs       # Page allocation and management
+│   ├── table.rs       # Page table operations
+│   ├── sparse.rs      # Sparse allocation tests
+│   ├── boundaries.rs  # Page boundary handling
+│   ├── reset.rs       # Memory reset functionality
+│   └── stress.rs      # Memory stress tests
+│
+├── compiler/          # Compiler module tests
+│   ├── emission.rs    # Code emission and buffer management
+│   ├── pc_mapping.rs  # PC to ARM64 offset mapping
+│   ├── branches.rs    # Branch patching and forward references
+│   ├── buffer.rs      # Code buffer bounds and overflow
+│   ├── x30_handling.rs # Special x30 register compilation
+│   └── errors.rs      # Compilation error handling
+│
+├── translator/        # Translator module tests
+│   ├── stubs.rs       # Initial stubbed implementation (temporary, removed when fully implemented)
+│   ├── register_mapping.rs  # RISC-V to ARM64 register mapping
+│   ├── zero_register.rs     # x0 special handling
+│   ├── x30_spill.rs        # x30 memory spill/reload
+│   └── instruction_sequences.rs  # Instruction translation patterns
+│
+└── vm/                # Virtual machine tests
+    ├── creation.rs    # VM instantiation and initialization
+    ├── api.rs         # Public API surface tests
+    ├── registers.rs   # Register read/write operations
+    ├── memory.rs      # Memory read/write operations
+    ├── syscalls.rs    # Syscall handler integration
+    ├── execution.rs   # call_function mechanism
+    ├── programs/      # Complete program execution tests
+    │   ├── simple.rs      # Basic arithmetic programs
+    │   ├── loops.rs       # Loop constructs
+    │   ├── functions.rs   # Function calls and returns
+    │   ├── recursive.rs   # Recursive functions
+    │   ├── syscalls.rs    # Programs using syscalls
+    │   └── stress.rs      # Performance stress tests
+    └── instructions/  # Per-instruction VM integration tests
+        ├── register/      # R-type instructions
+        │   ├── add.rs     # ADD with all register combinations
+        │   ├── sub.rs     # SUB with overflow cases
+        │   ├── and.rs     # AND logical operations
+        │   ├── or.rs      # OR logical operations
+        │   ├── xor.rs     # XOR logical operations
+        │   ├── sll.rs     # Shift left logical
+        │   ├── srl.rs     # Shift right logical
+        │   ├── sra.rs     # Shift right arithmetic
+        │   ├── slt.rs     # Set less than
+        │   └── sltu.rs    # Set less than unsigned
+        ├── immediate/     # I-type instructions
+        │   ├── addi.rs    # ADDI with immediate bounds
+        │   ├── andi.rs    # ANDI with bit patterns
+        │   ├── ori.rs     # ORI with bit patterns
+        │   ├── xori.rs    # XORI with bit patterns
+        │   ├── slli.rs    # SLLI shift amounts
+        │   ├── srli.rs    # SRLI shift amounts
+        │   ├── srai.rs    # SRAI with sign extension
+        │   ├── slti.rs    # SLTI comparisons
+        │   └── sltiu.rs   # SLTIU unsigned comparisons
+        ├── load/          # Load instructions
+        │   ├── lb.rs      # LB with sign extension
+        │   ├── lh.rs      # LH with alignment
+        │   ├── lw.rs      # LW with page boundaries
+        │   ├── lbu.rs     # LBU zero extension
+        │   └── lhu.rs     # LHU zero extension
+        ├── store/         # Store instructions
+        │   ├── sb.rs      # SB byte stores
+        │   ├── sh.rs      # SH halfword alignment
+        │   └── sw.rs      # SW word alignment
+        ├── branch/        # Branch instructions
+        │   ├── beq.rs     # BEQ with PC updates
+        │   ├── bne.rs     # BNE branch conditions
+        │   ├── blt.rs     # BLT signed comparisons
+        │   ├── bge.rs     # BGE signed comparisons
+        │   ├── bltu.rs    # BLTU unsigned comparisons
+        │   └── bgeu.rs    # BGEU unsigned comparisons
+        ├── upper/         # U-type instructions
+        │   ├── lui.rs     # LUI upper immediate
+        │   └── auipc.rs   # AUIPC PC-relative
+        ├── jump/          # Jump instructions
+        │   ├── jal.rs     # JAL direct jumps
+        │   └── jalr.rs    # JALR indirect jumps with PC lookup
+        ├── multiply/      # M extension
+        │   ├── mul.rs     # MUL multiplication
+        │   ├── mulh.rs    # MULH high bits signed
+        │   ├── mulhsu.rs  # MULHSU mixed sign
+        │   ├── mulhu.rs   # MULHU high bits unsigned
+        │   ├── div.rs     # DIV signed division
+        │   ├── divu.rs    # DIVU unsigned division
+        │   ├── rem.rs     # REM signed remainder
+        │   └── remu.rs    # REMU unsigned remainder
+        └── system/        # System instructions
+            ├── ecall.rs   # ECALL syscall mechanism
+            └── ebreak.rs  # EBREAK handling
 ```
-
-Each instruction requires full test coverage including basic operation, edge cases, x0 immutability, x30 spill/reload, PC alignment, and 100% code coverage.
-
-### Edge Cases
-- PC alignment violations (4-byte aligned)
-- Self-modifying code (cache invalidation)
-- Memory page boundaries
-- Invalid/undefined opcodes
-- Register hazards and dependencies
-- Stack overflow scenarios
-- Unaligned memory access
-- Maximum branch distances
-- Code buffer exhaustion
-- Nested syscalls
-
-### Performance Considerations
-- Minimize register spilling
-- Optimize common instruction sequences
-- Cache compiled code efficiently
-- Use direct jumps where possible
-- Minimize syscall overhead
-- Consider instruction fusion (future optimization)
 
 ## TODO
 *Tasks to be defined after plan iteration and refinement*
