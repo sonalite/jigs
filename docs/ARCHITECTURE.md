@@ -73,11 +73,12 @@ Page-based memory system
 Unit tests kept separate from code to enable extensive test coverage
 
 #### `instruction/`
-RISC-V instruction tests
+RISC-V instruction tests (subfolders contain tests for each instruction type)
 - `roundtrip/` - Bidirectional encode+decode tests for all instruction types
 - `encode/` - Encoding-specific tests (bounds checking, error handling)
 - `decode/` - Remaining decode-only tests for special validation cases
 - `display/` - Tests for instruction display formatting
+- `error.rs` - Error type tests
 
 #### Planned Test Modules
 - `encoder/` - ARM64 encoder tests

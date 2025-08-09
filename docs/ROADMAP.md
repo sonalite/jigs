@@ -1,4 +1,4 @@
-# Jigs - RISC-V Instruction Decoder Roadmap
+# Jigs - Development Roadmap
 
 ## Projects
 

@@ -11,6 +11,7 @@ Key features:
 Currently, the decoding/encoding layer is complete for all RV32IM instructions, with the AOT compiler and runtime being the next major milestones.
 
 ## Links
-**@docs/DEVELOPMENT.md** - Development guidelines, commands, testing conventions, and contribution guidelines
-**@docs/ARCHITECTURE.md** - Project architecture, module structure, and test organization
-**@docs/ROADMAP.md** - Feature roadmap and project tracking with implementation status
+
+- **@docs/DEVELOPMENT.md** - Development guidelines, commands, testing conventions, and contribution guidelines
+- **@docs/ARCHITECTURE.md** - Project architecture, module structure, and test organization
+- **@docs/ROADMAP.md** - Feature roadmap and project tracking with implementation status
