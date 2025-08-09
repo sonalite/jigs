@@ -52,6 +52,7 @@ Before committing any changes, ensure all of the following pass without warnings
 - Always run the full pre-commit checklist before committing
 - Focus commit messages on the primary functionality (e.g., "Implement XOR instruction" not "Update tests and add XOR")
 - Ask for user confirmation before committing to ensure accuracy
+- **Commit Size Guidelines**: Each commit should aim to be less than 500 lines whenever possible. If a change exceeds 500 lines, break it into separate logical commits
 
 ## Development Tracking
 - **docs/ROADMAP.md**: Contains the roadmap of planned features and implementation status
