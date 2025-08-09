@@ -6,17 +6,28 @@ Implementation of a Just-In-Time (JIT) compiler runtime that translates RISC-V 3
 ## Architecture
 
 ### Design Principles
-- **Single-pass compilation**: Direct RISC-V to ARM64 translation, maximizes compilation speed
-- **Fixed allocations**: All memory allocated in `new()`, no runtime allocations for predictable performance
+- **Native execution**: Compiled code runs natively without interpretation overhead
 - **Direct register mapping**: RISC-V registers live in ARM64 hardware registers for maximum performance
-- **Direct execution**: Compiled code runs natively without interpretation overhead
-- **x30 special case**: Preserves ARM64 link register functionality via memory storage
-- **Separate spill stack**: Keeps VM memory space clean and predictable
-- **Generic syscall handler**: Avoids dynamic dispatch overhead
-- **PC mapping table**: Enables efficient indirect jump handling
-- **Stubbed implementation**: Allows incremental development and testing
+- **Fixed allocations**: All memory allocated in `new()`, no runtime allocations for predictable performance
+- **Manual memory page management**: Precise control over page allocations and access
+- **Single-pass compilation**: Direct RISC-V to ARM64 translation for predictable compile speed
+- **ARM64-only target**: Both RISC architectures with 32 registers enabling direct mapping
 - **Single-threaded execution**: Runtime designed for single-threaded operation only
-- **ARM64-only target**: Runtime enforces ARM64 architecture requirement at compile time
+- **PC mapping table**: Enables efficient indirect jump handling
+
+### Public API
+```rust
+pub fn new<S>(config: Config, syscall_handler: S) -> Result<Self, VmError>
+    where S: Fn(&mut VirtualMachine<S>, u32) -> Result<(), RuntimeError>
+
+pub fn load_program(&mut self, code: &[u8], address: u32) -> Result<(), VmError>
+pub fn call_function(&mut self, address: u32, args: &[u32]) -> Result<u32, RuntimeError>
+pub fn read_register(&self, reg: u8) -> u32
+pub fn write_register(&mut self, reg: u8, value: u32)
+pub fn read_memory(&self, address: u32, size: usize) -> Result<Vec<u8>, MemoryError>
+pub fn write_memory(&mut self, address: u32, data: &[u8]) -> Result<(), MemoryError>
+pub fn clear_memory(&mut self)
+```
 
 ### Register Mapping (RISC-V → ARM64)
 - **x0**: Always zero (uses ARM64 xzr when needed)
@@ -71,6 +82,13 @@ Implementation of a Just-In-Time (JIT) compiler runtime that translates RISC-V 3
 - PC to code offset mapping table
 - Register stack always maintains at least one set of saved registers at the top for `read_register` access
 
+### Compiler (`src/compiler.rs`)
+- Tracks current RISC-V PC during compilation
+- Maintains PC to ARM64 offset mapping
+- Forward branch fixup list
+- Single-pass translation flow
+- Pointers to x30 storage, spill stack, memory, and VM itself
+
 ### Memory Management (`src/memory.rs`)
 - **Memory Struct**: Stored in `Box<Memory>` for stable pointer access from native code
 - **Page Table**: 2MB array of 2^20 u16 entries, each indexing into page array
@@ -83,21 +101,14 @@ Implementation of a Just-In-Time (JIT) compiler runtime that translates RISC-V 3
 - **Memory Operations**:
   - Native ARM64 code directly accesses memory via pointer
   - All page lookups and manipulation done by JIT-compiled code
-  - Bounds-checked read/write helper methods for VM initialization
+  - Read/write operations compiled directly into native code (no Rust helpers)
 - **Reset Functionality**: Clear mapped pages and reset page table between executions
-- **Sparse Mapping**: Only allocate pages that are actually accessed (lazy allocation)
+- **Sparse Mapping**: Only acquire pages from pool when actually accessed (lazy mapping)
 
 ### ARM64 Code Generation (`src/arm64/`)
 - **`mod.rs`**: Module organization, register constants, types
 - **`encoder.rs`**: Instruction encoding helpers, register/immediate encoding, branch offsets
 - **`emitter.rs`**: Code emission to fixed buffer, write position tracking, forward branch patching
-
-### Compiler (`src/compiler.rs`)
-- Tracks current RISC-V PC during compilation
-- Maintains PC to ARM64 offset mapping
-- Forward branch fixup list
-- Single-pass translation flow
-- Pointer to x30 storage and spill stack
 
 ### Translator (`src/translator.rs`)
 - Per-instruction translation methods (initially stubbed returning `NotImplemented`)
@@ -120,19 +131,6 @@ Implementation of a Just-In-Time (JIT) compiler runtime that translates RISC-V 3
   - `max_code_size: usize` - Maximum JIT code buffer size (default: 1MB)
   - `max_stack_depth: usize` - Maximum spill stack depth (default: 64KB)
 - **Validation**: Configuration validated at VM creation time
-
-### Public API
-```rust
-pub fn new<S>(config: Config, syscall_handler: S) -> Result<Self, VmError>
-    where S: Fn(&mut VirtualMachine<S>, u32) -> Result<(), RuntimeError>
-
-pub fn load_program(&mut self, code: &[u8], address: u32) -> Result<(), VmError>
-pub fn call_function(&mut self, address: u32, args: &[u32]) -> Result<u32, RuntimeError>
-pub fn read_register(&self, reg: u8) -> u32
-pub fn write_register(&mut self, reg: u8, value: u32)
-pub fn read_memory(&self, address: u32, size: usize) -> Result<Vec<u8>, MemoryError>
-pub fn write_memory(&mut self, address: u32, data: &[u8]) -> Result<(), MemoryError>
-```
 
 ### Testing Structure
 ```
