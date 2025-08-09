@@ -5,10 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 Jigs - A high-performance RISC-V runtime for ARM64 systems with gas-metered execution. The project aims to build a complete RISC-V execution environment that:
 1. Decodes and encodes RISC-V 32-bit instructions
-2. JIT-compiles RISC-V code to native ARM64 for near-native performance
+2. AOT-compiles RISC-V code to native ARM64 for near-native performance (compiles when loaded, not during execution)
 3. Provides gas-metered execution for controlled resource usage in blockchain/sandboxed environments
 
-Currently implements full decoding and encoding for all RV32IM instructions (base integer instructions plus M extension), with JIT compilation and gas tracking planned.
+Currently implements full decoding and encoding for all RV32IM instructions (base integer instructions plus M extension), with AOT compilation and gas tracking planned.
 
 ## Architecture
 The project is structured as a Rust library with an example binary:
