@@ -235,5 +235,163 @@ src/tests/
             └── ebreak.rs  # EBREAK handling
 ```
 
-## TODO
-*Tasks to be defined after plan iteration and refinement*
+## Tasks
+
+### Phase 1: Foundation Infrastructure 📋
+
+#### Memory System 📋
+- 📋 Memory struct and page table - Create Memory struct with page table array, page pool, and basic structure
+- 📋 Page allocation and management - Implement lazy page allocation from pre-allocated pool with tests
+- 📋 Memory ARM64 access routines - Native ARM64 assembly for page table lookup and memory access
+- 📋 Memory helper wrappers - Rust wrappers around ARM64 routines for VM read_memory/write_memory
+- 📋 Memory reset functionality - Implement reset between executions with tests
+- 📋 Memory boundary tests - Test page boundaries, sparse allocation, stress tests
+
+#### Virtual Machine Core 📋
+- 📋 VM struct and initialization - Create VirtualMachine struct with syscall handler, x30 storage, memory box with tests
+- 📋 Register read/write API - Implement read_register/write_register methods with x30 special handling and tests
+- 📋 VM public API tests - Test all public methods and error cases
+
+#### ARM64 Encoder Foundation 📋
+- 📋 Encoder module structure - Create encoder.rs with ARM64 instruction format constants and tests
+- 📋 Register encoding - Implement register encoding helpers (X0-X31, SP, XZR) with tests
+- 📋 Immediate encoding - Add immediate value encoding and validation with tests
+- 📋 Branch offset encoding - Implement branch offset calculations with tests
+
+#### Translator Foundation 📋
+- 📋 Translator module - Create translator.rs with translate_instruction dispatch and tests
+- 📋 Stub all instructions - Add stub methods returning NotImplemented for all RISC-V instructions with tests
+- 📋 Translation result type - Define structure for returning ARM64 instruction sequences
+
+#### Compiler Foundation 📋
+- 📋 Compiler struct - Create Compiler with code buffer, PC tracking, branch fixup list with tests
+- 📋 Code emission basics - Implement emit_instruction and buffer management with tests
+- 📋 PC mapping table - Implement RISC-V PC to ARM64 offset mapping with tests
+- 📋 Branch patching - Forward branch fixup list and resolution with tests
+- 📋 Compiler error handling - Buffer overflow, invalid instructions with tests
+- 📋 Spill stack management - Track stack depth, bounds checking with tests
+- 📋 x30 special handling - Compiler support for x30 spill/reload sequences with tests
+- 📋 Translator integration - Call translator and emit returned ARM64 instructions
+- 📋 Memory access emission - Helper to emit calls to ARM64 memory access routines
+
+### Phase 2: Minimal Execution Path 📋
+
+#### Essential ARM64 Instructions 📋
+- 📋 Move instructions - MOV, MOVZ ARM64 encoding (for loading immediates) with tests
+- 📋 Branch instructions - BR, RET ARM64 encoding (for JALR translation) with tests
+- 📋 Load/Store register - LDR, STR for x30 handling and memory access with tests
+- 📋 Add immediate - ADD with immediate for address calculations with tests
+
+#### Critical Translations 📋
+- 📋 JALR translation - Indirect jump with PC table lookup, essential for RET with tests
+- 📋 ADDI translation - ARM64 ADD with immediate (often used with JALR for returns) with tests
+
+#### Execution Support 📋
+- 📋 Load program - Implement load_program with single-pass compilation and tests
+- 📋 Call function mechanism - Save/restore ARM64 registers, jump to compiled code with tests
+- 📋 Basic execution test - Test call_function with JALR return
+
+### Phase 3: Memory Access Instructions 📋
+
+#### Load/Store ARM64 Support 📋
+- 📋 Memory bounds checking - ARM64 code for address validation with tests
+- 📋 Page fault handling - ARM64 code for lazy page allocation with tests
+- 📋 Byte/halfword/word access - ARM64 routines for different data sizes with tests
+
+#### Load Translations 📋
+- 📋 LW translation - ARM64 LDR using memory access routine with tests
+- 📋 LB translation - ARM64 LDRSB using memory access routine with tests
+- 📋 LH translation - ARM64 LDRSH using memory access routine with tests
+- 📋 LBU translation - ARM64 LDRB using memory access routine with tests
+- 📋 LHU translation - ARM64 LDRH using memory access routine with tests
+
+#### Store Translations 📋
+- 📋 SW translation - ARM64 STR using memory access routine with tests
+- 📋 SB translation - ARM64 STRB using memory access routine with tests
+- 📋 SH translation - ARM64 STRH using memory access routine with tests
+
+### Phase 4: Core ARM64 Encoder Instructions 📋
+
+#### Arithmetic and Logical 📋
+- 📋 Arithmetic instructions - ADD, SUB, NEG ARM64 encoding with tests
+- 📋 Logical instructions - AND, ORR, EOR, MVN ARM64 encoding with tests
+- 📋 Shift instructions - LSL, LSR, ASR, ROR ARM64 encoding with tests
+- 📋 Compare instructions - CMP, CMN, TST, CSET ARM64 encoding with tests
+
+#### Data Movement 📋
+- 📋 Extended move instructions - MOVK, MOVN ARM64 encoding with tests
+
+#### Control Flow 📋
+- 📋 Direct branch instructions - B, BL, BLR ARM64 encoding with tests
+- 📋 Conditional branches - B.EQ, B.NE, B.LT, B.GE, B.LO, B.HS ARM64 encoding with tests
+
+#### Multiplication and Division 📋
+- 📋 Multiply instructions - MUL, SMULL, UMULL ARM64 encoding with tests
+- 📋 Division instructions - SDIV, UDIV ARM64 encoding with tests
+- 📋 MSUB instruction - MSUB for remainder calculation with tests
+
+### Phase 5: RISC-V Instruction Translation 📋
+
+#### R-Type Instructions 📋
+- 📋 ADD translation - Direct ARM64 ADD with register mapping and tests
+- 📋 SUB translation - ARM64 SUB instruction with tests
+- 📋 AND translation - ARM64 AND instruction with tests
+- 📋 OR translation - ARM64 ORR instruction with tests
+- 📋 XOR translation - ARM64 EOR instruction with tests
+- 📋 SLL translation - ARM64 LSL with register shift and tests
+- 📋 SRL translation - ARM64 LSR with register shift and tests
+- 📋 SRA translation - ARM64 ASR with register shift and tests
+- 📋 SLT translation - CMP and CSET sequence with tests
+- 📋 SLTU translation - CMP and CSET for unsigned with tests
+
+#### I-Type Instructions 📋
+- 📋 ANDI translation - ARM64 AND with immediate and tests
+- 📋 ORI translation - ARM64 ORR with immediate and tests
+- 📋 XORI translation - ARM64 EOR with immediate and tests
+- 📋 SLLI translation - ARM64 LSL with immediate shift and tests
+- 📋 SRLI translation - ARM64 LSR with immediate shift and tests
+- 📋 SRAI translation - ARM64 ASR with immediate shift and tests
+- 📋 SLTI translation - CMP and CSET with immediate and tests
+- 📋 SLTIU translation - Unsigned CMP and CSET with immediate and tests
+
+#### Branch Instructions 📋
+- 📋 BEQ translation - ARM64 conditional branch B.EQ with tests
+- 📋 BNE translation - ARM64 conditional branch B.NE with tests
+- 📋 BLT translation - ARM64 signed comparison B.LT with tests
+- 📋 BGE translation - ARM64 signed comparison B.GE with tests
+- 📋 BLTU translation - ARM64 unsigned comparison B.LO with tests
+- 📋 BGEU translation - ARM64 unsigned comparison B.HS with tests
+
+#### Jump Instructions 📋
+- 📋 JAL translation - Direct jump with link register save and tests
+
+#### U-Type Instructions 📋
+- 📋 LUI translation - Load upper immediate with MOVZ/MOVK and tests
+- 📋 AUIPC translation - PC-relative address calculation with tests
+
+#### M Extension 📋
+- 📋 MUL translation - ARM64 MUL instruction with tests
+- 📋 MULH translation - ARM64 SMULL high bits with tests
+- 📋 MULHSU translation - Mixed sign multiplication with tests
+- 📋 MULHU translation - ARM64 UMULL high bits with tests
+- 📋 DIV translation - ARM64 SDIV instruction with tests
+- 📋 DIVU translation - ARM64 UDIV instruction with tests
+- 📋 REM translation - SDIV and MSUB for remainder with tests
+- 📋 REMU translation - UDIV and MSUB for remainder with tests
+
+#### System Instructions 📋
+- 📋 ECALL translation - Save registers, call syscall handler, restore with tests
+- 📋 EBREAK translation - NOP or halt implementation with tests
+
+### Phase 6: Integration and Testing 📋
+
+#### Program Execution Tests 📋
+- 📋 Simple arithmetic programs - Test basic arithmetic operations
+- 📋 Memory access programs - Test loads/stores with page allocation
+- 📋 Loop constructs - Test branch and jump loops
+- 📋 Function calls - Test JAL/JALR function call patterns
+- 📋 Recursive functions - Stack-based recursion tests
+- 📋 Syscall programs - Test ECALL integration
+- 📋 Memory boundary operations - Test loads/stores across page boundaries
+- 📋 M extension programs - Test multiply/divide operations
+- 📋 Performance stress tests - Large program compilation and execution
