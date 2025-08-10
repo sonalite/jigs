@@ -1,7 +1,13 @@
+use crate::memory::Memory;
+
 /// Compiled ARM64 code module containing translated RISC-V instructions
 pub struct Module {
     /// Number of instances currently attached to this module
     pub(crate) instance_count: usize,
+    /// Pointer to pointer to the attached instance's memory
+    /// This is a Box<*mut Memory> so the compiled code can access memory
+    /// through this stable pointer, even when the instance changes
+    pub(crate) memory_ptr: Box<*mut Memory>,
 }
 
 impl Module {
@@ -15,7 +21,10 @@ impl Module {
     pub fn compile(code: &[u8]) -> Result<Module, CompileError> {
         // TODO: Implement compilation
         let _ = code;
-        Ok(Module { instance_count: 0 })
+        Ok(Module {
+            instance_count: 0,
+            memory_ptr: Box::new(std::ptr::null_mut()),
+        })
     }
 }
 

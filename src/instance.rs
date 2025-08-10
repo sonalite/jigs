@@ -29,6 +29,8 @@ impl Instance {
         self.module = module as *mut Module;
         unsafe {
             (*self.module).instance_count += 1;
+            // Set the module's memory pointer to point to this instance's memory
+            *(*self.module).memory_ptr = &mut *self.memory as *mut Memory;
         }
     }
 
@@ -37,6 +39,8 @@ impl Instance {
         if !self.module.is_null() {
             unsafe {
                 (*self.module).instance_count -= 1;
+                // Clear the module's memory pointer when detaching
+                *(*self.module).memory_ptr = ptr::null_mut();
             }
             self.module = ptr::null_mut();
         }

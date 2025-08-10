@@ -291,6 +291,7 @@ src/tests/
 #### Module Core 🚧
 - ✅ Module struct with instance tracking - Create Module struct with code buffer and instance count tracking to detect if dropped with instances
 - ✅ Module drop protection - Implement drop checks that prevent module from being dropped while instances are attached
+- ✅ Memory pointer for attached instance - Add Box<*mut Memory> to store pointer to attached instance's memory (pointer to pointer for swappability)
 - 📋 Basic Module::compile stub - Create Module::compile that returns empty Module for testing
 - 📋 PC mapping table - Add PC to code offset mapping table to Module
 - 📋 Module immutability - Ensure Module is immutable after compilation (except memory pointer)
