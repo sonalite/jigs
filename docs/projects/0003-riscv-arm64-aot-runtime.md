@@ -60,15 +60,17 @@ Implementation of an Ahead-of-Time (AOT) compiler runtime that translates RISC-V
 ### Module (`src/module.rs`)
 - Contains compiled ARM64 code in fixed-size buffer
 - PC to code offset mapping table for indirect jumps
-- PC to code offset mapping table for indirect jumps
-- Immutable after compilation - can be shared across instances
+- Stores `Box<u64>` pointer to active Instance's memory (set when Instance calls)
+- Since runtime is single-threaded, only one Instance runs at a time
+- Compiled code can directly access memory via this fixed pointer
+- Immutable after compilation (except for memory pointer update)
 - Code buffer made executable after compilation
-- No runtime state - purely compiled code and metadata
 
 ### Instance (`src/instance.rs`)
 - Runtime state for executing a compiled Module
 - x30 as `Box<u32>` for direct memory access
-- Memory system as `Box<Memory>` with pointer passed to native code
+- Memory system as `Box<Memory>` with stable pointer for native code access
+- Sets Module's memory pointer to its Memory before execution
 - Spill stack for register save/restore during syscalls
 - Reference to Module for code execution
 - Generic syscall handler type: `S: Fn(&mut Instance<S>, u32) -> Result<(), RuntimeError>`

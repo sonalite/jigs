@@ -50,9 +50,11 @@ Per-instruction RISC-V to ARM64 translation logic
 Compiled ARM64 code module (immutable, reusable)
 - Fixed-size code buffer containing compiled ARM64 instructions
 - PC to code offset mapping table for indirect jumps
-- Immutable after compilation - can be shared across instances
+- Stores `Box<u64>` pointer to active Instance's memory (set when Instance calls)
+- Since runtime is single-threaded, only one Instance runs at a time
+- Compiled code can directly access memory via this fixed pointer
+- Immutable after compilation (except for memory pointer update)
 - Code buffer made executable after compilation
-- No runtime state - purely compiled code and metadata
 - Public API: `compile()`
 
 ### `src/instance.rs`
@@ -61,6 +63,7 @@ Runtime instance for executing a compiled Module
 - Generic syscall handler: `S: Fn(&mut Instance<S>, u32) -> Result<(), RuntimeError>`
 - x30 register stored as `Box<u32>` for memory access
 - Memory system as `Box<Memory>` with stable pointer for native code
+- Sets Module's memory pointer to its Memory before execution
 - Spill stack for register save/restore during syscalls
 - No RISC-V register storage (except x30) - registers live in ARM64 hardware
 - Public API: `new()`, `call_function()`, `read/write_register()`, `read/write_memory()`, `run()`, `reset()`
