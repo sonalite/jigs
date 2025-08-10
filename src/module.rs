@@ -21,15 +21,14 @@ pub struct Module {
 }
 
 impl Module {
-    /// Compile RISC-V code into ARM64 instructions
+    /// Create a new Module
     ///
     /// # Arguments
-    /// * `code` - RISC-V machine code to compile
     /// * `max_code_size` - Maximum expected size of RISC-V code (for buffer allocation)
     ///
     /// # Returns
-    /// Compiled module ready for execution
-    pub fn compile(code: &[u8], max_code_size: usize) -> Result<Module, CompileError> {
+    /// Empty module ready to receive code via set_code()
+    pub fn new(max_code_size: usize) -> Result<Module, CompileError> {
         // Calculate ARM64 code buffer size based on RISC-V code size
         let code_buffer_size = max_code_size * ARM64_CODE_SIZE_MULTIPLIER;
 
@@ -58,15 +57,40 @@ impl Module {
             ptr as *mut u8
         };
 
-        // TODO: Implement actual compilation
-        let _ = code;
-
         Ok(Module {
             instance_count: 0,
             memory_ptr: Box::new(std::ptr::null_mut()),
             code_buffer,
             code_buffer_size,
         })
+    }
+
+    /// Set and compile new RISC-V code for this module
+    ///
+    /// # Arguments
+    /// * `code` - RISC-V machine code to compile
+    ///
+    /// # Returns
+    /// Ok(()) if compilation succeeds
+    ///
+    /// # Errors
+    /// Returns error if instances are attached, code is too large, or compilation fails
+    pub fn set_code(&mut self, code: &[u8]) -> Result<(), CompileError> {
+        // Check that no instances are attached
+        if self.instance_count != 0 {
+            return Err(CompileError::InstancesAttached);
+        }
+
+        // Check that code size doesn't exceed buffer capacity
+        let required_size = code.len() * ARM64_CODE_SIZE_MULTIPLIER;
+        if required_size > self.code_buffer_size {
+            return Err(CompileError::CodeTooLarge);
+        }
+
+        // TODO: Implement actual compilation
+        let _ = code;
+
+        Ok(())
     }
 }
 
@@ -95,4 +119,8 @@ pub enum CompileError {
     NotImplemented,
     /// Failed to allocate memory for code buffer
     AllocationFailed,
+    /// Cannot set code while instances are attached
+    InstancesAttached,
+    /// Code size exceeds the module's buffer capacity
+    CodeTooLarge,
 }

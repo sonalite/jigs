@@ -123,7 +123,8 @@ Implementation of an Ahead-of-Time (AOT) compiler runtime that translates RISC-V
 #### Module API
 ```rust
 impl Module {
-    pub fn compile(code: &[u8], address: u32) -> Result<Module>  // Compiles RISC-V to ARM64
+    pub fn new(max_code_size: usize) -> Result<Module>  // Create a new Module
+    pub fn set_code(&mut self, code: &[u8]) -> Result<()>  // Set and compile RISC-V code
 }
 ```
 
@@ -293,10 +294,11 @@ src/tests/
 - ✅ Module drop protection - Implement drop checks that prevent module from being dropped while instances are attached
 - ✅ Memory pointer for attached instance - Add Box<*mut Memory> to store pointer to attached instance's memory (pointer to pointer for swappability)
 - ✅ Define ARM64_CODE_SIZE_MULTIPLIER constant - Define constant for maximum ARM64 code size as multiple of RISC-V code size
-- ✅ Calculate code buffer size - Accept max_code_size parameter in Module::compile, multiply by ARM64_CODE_SIZE_MULTIPLIER constant
+- ✅ Calculate code buffer size - Accept max_code_size parameter in Module::new, multiply by ARM64_CODE_SIZE_MULTIPLIER constant
 - ✅ Create executable memory - Initially allocate code buffer with PROT_READ | PROT_WRITE permissions and MAP_JIT flag for macOS
+- ✅ Module reusability - Add Module::new() and Module::set_code() to allow reusing modules with different code
 - 📋 Revisit ARM64_CODE_SIZE_MULTIPLIER - After implementing all compiler instructions, revisit the multiplier value for correctness based on actual expansion ratios
-- 📋 Basic Module::compile stub - Create Module::compile that returns empty Module for testing
+- 📋 Basic Module::set_code stub - Enhance Module::set_code to do actual compilation
 - 📋 Mark memory as executable - After compilation, change permissions to PROT_READ | PROT_EXEC using mprotect
 - 📋 PC mapping table - Add PC to code offset mapping table to Module
 
@@ -322,7 +324,7 @@ src/tests/
 - 📋 Minimal compiler setup - Create basic Compiler struct that can emit RET instruction
 - 📋 RET instruction encoding - Implement ARM64 RET instruction encoding in encoder
 - 📋 Make code buffer executable - Set up mmap with PROT_EXEC for ARM64 code execution
-- 📋 Basic Module::compile - Implement minimal compile() that creates Module with single RET
+- 📋 Basic Module::set_code - Implement minimal set_code() that compiles single RET instruction
 - 📋 Memory pointer setup - Add logic to set Module's memory pointer before execution
 - 📋 Basic call_function - Implement minimal call_function that saves registers, jumps to code, restores registers
 - 📋 First execution test - Test call_function with simple RET that returns immediately
@@ -362,7 +364,7 @@ src/tests/
 - 📋 ADDI translation - ARM64 ADD with immediate (often used with JALR for returns) with tests
 
 #### Execution Support 📋
-- 📋 Compiler integration in Module - Wire up Compiler to Module::compile method
+- 📋 Compiler integration in Module - Wire up Compiler to Module::set_code method
 - 📋 Single instruction compilation - Compile a single RISC-V instruction to ARM64
 - 📋 Multi-instruction compilation - Extend to compile multiple instructions
 - 📋 Register save logic - Implement ARM64 register save (x19-x28, x29, x30, sp)

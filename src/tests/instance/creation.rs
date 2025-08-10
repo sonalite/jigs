@@ -16,7 +16,7 @@ fn create_instance() {
 fn attach_to_module() {
     let mut store = PageStore::new(100);
     let memory = Memory::new(&mut store, 50, 10);
-    let mut module = Module::compile(&[], 1).unwrap();
+    let mut module = Module::new(1).unwrap();
     let mut instance = Instance::new(memory);
     instance.attach(&mut module);
     assert!(instance.attached());
@@ -27,7 +27,7 @@ fn attach_to_module() {
 fn detach_from_module() {
     let mut store = PageStore::new(100);
     let memory = Memory::new(&mut store, 50, 10);
-    let mut module = Module::compile(&[], 1).unwrap();
+    let mut module = Module::new(1).unwrap();
     let mut instance = Instance::new(memory);
     instance.attach(&mut module);
     assert_eq!(module.instance_count, 1);
@@ -39,7 +39,7 @@ fn detach_from_module() {
 #[test]
 fn auto_detach_on_drop() {
     let mut store = PageStore::new(100);
-    let mut module = Module::compile(&[], 1).unwrap();
+    let mut module = Module::new(1).unwrap();
     {
         let memory = Memory::new(&mut store, 50, 10);
         let mut instance = Instance::new(memory);
@@ -54,7 +54,7 @@ fn multiple_instances_same_module() {
     let mut store = PageStore::new(100);
     let memory1 = Memory::new(&mut store, 50, 10);
     let memory2 = Memory::new(&mut store, 50, 10);
-    let mut module = Module::compile(&[], 1).unwrap();
+    let mut module = Module::new(1).unwrap();
     let mut instance1 = Instance::new(memory1);
     let mut instance2 = Instance::new(memory2);
     instance1.attach(&mut module);
@@ -70,8 +70,8 @@ fn multiple_instances_same_module() {
 fn reattach_to_different_module() {
     let mut store = PageStore::new(100);
     let memory = Memory::new(&mut store, 50, 10);
-    let mut module1 = Module::compile(&[], 1).unwrap();
-    let mut module2 = Module::compile(&[], 1).unwrap();
+    let mut module1 = Module::new(1).unwrap();
+    let mut module2 = Module::new(1).unwrap();
     let mut instance = Instance::new(memory);
 
     instance.attach(&mut module1);
