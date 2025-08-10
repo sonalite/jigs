@@ -1,4 +1,4 @@
-use crate::memory::Memory;
+use crate::{compiler::Compiler, instruction::Instruction, memory::Memory};
 use std::ptr;
 
 /// Maximum ARM64 code size as a multiple of RISC-V code size
@@ -18,6 +18,8 @@ pub struct Module {
     code_buffer: *mut u8,
     /// Size of the code buffer in bytes
     code_buffer_size: usize,
+    /// Size of the actual compiled code in bytes
+    code_size: usize,
 }
 
 impl Module {
@@ -62,6 +64,7 @@ impl Module {
             memory_ptr: Box::new(std::ptr::null_mut()),
             code_buffer,
             code_buffer_size,
+            code_size: 0,
         })
     }
 
@@ -87,10 +90,44 @@ impl Module {
             return Err(CompileError::CodeTooLarge);
         }
 
-        // TODO: Implement actual compilation
-        let _ = code;
+        // Decode RISC-V instructions
+        let mut instructions = Vec::new();
+        for chunk in code.chunks_exact(4) {
+            let word = u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
+            let instr = Instruction::decode(word);
+            instructions.push(instr);
+        }
+
+        // Compile to ARM64
+        let mut compiler = Compiler::new();
+        let arm64_code = compiler.compile(&instructions);
+
+        // Copy compiled code to the code buffer
+        self.code_size = arm64_code.len();
+        unsafe {
+            ptr::copy_nonoverlapping(arm64_code.as_ptr(), self.code_buffer, self.code_size);
+
+            // Make the code executable
+            if libc::mprotect(
+                self.code_buffer as *mut libc::c_void,
+                self.code_buffer_size,
+                libc::PROT_READ | libc::PROT_EXEC,
+            ) != 0
+            {
+                return Err(CompileError::AllocationFailed);
+            }
+        }
 
         Ok(())
+    }
+
+    /// Get a slice of the compiled ARM64 code
+    pub fn code(&self) -> &[u8] {
+        if self.code_size == 0 {
+            &[]
+        } else {
+            unsafe { std::slice::from_raw_parts(self.code_buffer, self.code_size) }
+        }
     }
 }
 

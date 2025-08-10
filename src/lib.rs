@@ -4,6 +4,7 @@
 //! - AOT compilation to native ARM64
 //! - Gas-metered execution for controlled resource usage
 
+pub mod compiler;
 pub mod instance;
 pub mod instruction;
 pub mod memory;

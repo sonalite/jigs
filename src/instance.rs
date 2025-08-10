@@ -1,5 +1,5 @@
 use crate::{memory::Memory, module::Module};
-use std::ptr;
+use std::{mem, ptr};
 
 /// Runtime instance for executing compiled RISC-V code
 pub struct Instance {
@@ -59,6 +59,38 @@ impl Instance {
     /// Get a mutable reference to this instance's memory
     pub fn memory_mut(&mut self) -> &mut Memory {
         &mut self.memory
+    }
+
+    /// Call a function in the compiled module
+    ///
+    /// # Safety
+    /// - Instance must be attached to a module
+    /// - Function index must be valid
+    /// - Module's compiled code must be valid ARM64 instructions
+    pub unsafe fn call_function(&mut self, _function_index: usize) -> Result<(), &'static str> {
+        unsafe {
+            if self.module.is_null() {
+                return Err("Instance not attached to module");
+            }
+
+            let module = &*self.module;
+
+            // Get the compiled code from the module
+            let code = module.code();
+            if code.is_empty() {
+                return Err("Module has no compiled code");
+            }
+
+            // Cast the code buffer to a function pointer
+            // The compiled code should start with the function we want to call
+            let fn_ptr = code.as_ptr() as *const ();
+            let func: extern "C" fn() = mem::transmute(fn_ptr);
+
+            // Call the function
+            func();
+
+            Ok(())
+        }
     }
 }
 
