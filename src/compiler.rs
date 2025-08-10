@@ -3,14 +3,7 @@
 //! This module provides AOT (Ahead-Of-Time) compilation of RISC-V instructions
 //! to native ARM64 machine code.
 
-use crate::Instruction;
-
-/// ARM64 instruction encoding constants
-mod arm64 {
-    /// RET instruction (return to link register)
-    /// Encoding: 1101011_0010_11111_000000_11110_00000
-    pub const RET: u32 = 0xD65F03C0;
-}
+use crate::{Instruction, arm64};
 
 /// Compiles RISC-V instructions to ARM64 machine code
 pub struct Compiler;
