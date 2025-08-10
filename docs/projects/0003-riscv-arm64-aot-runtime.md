@@ -279,8 +279,8 @@ src/tests/
 - ✅ Memory reset functionality - Return pages to global pool and clear page table with tests
 - ✅ Memory boundary tests - Test page boundaries, sparse allocation, stress tests
 - ✅ Memory test coverage - Achieved 100% test coverage for memory.rs
-- 📋 Buffer read - Read arbitrary buffer from address, fill with zeros for unallocated pages
-- 📋 Buffer write - Write arbitrary buffer to address with page allocation as needed
+- ✅ Buffer read - Read arbitrary buffer from address, fill with zeros for unallocated pages
+- ✅ Buffer write - Write arbitrary buffer to address with page allocation as needed
 
 #### Module Core 📋
 - 📋 Module struct - Create Module struct with code buffer, PC mapping table with tests

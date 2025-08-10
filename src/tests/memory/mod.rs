@@ -6,3 +6,4 @@ mod page_store;
 mod read;
 mod reset;
 mod stress;
+mod write;

@@ -376,10 +376,16 @@ impl Memory {
     /// - Reading across page boundaries
     /// - Sparse memory regions (unallocated pages read as zeros)
     /// - Partial page reads
+    /// - Address wraparound (reading past 0xFFFFFFFF continues from 0x00000000)
     ///
     /// # Arguments
     /// * `address` - The starting address to read from
     /// * `buffer` - The buffer to fill with read data
+    ///
+    /// # Address Wraparound
+    /// The method uses `wrapping_add` for address arithmetic, so reads that
+    /// extend past the end of the 32-bit address space (0xFFFFFFFF) will wrap
+    /// around to the beginning (0x00000000) and continue reading.
     pub fn read(&self, address: u32, buffer: &mut [u8]) {
         let mut addr = address;
         let mut offset = 0;
@@ -425,6 +431,73 @@ impl Memory {
             offset += bytes_in_page;
             addr = addr.wrapping_add(bytes_in_page as u32);
         }
+    }
+
+    /// Write data from a buffer into memory
+    ///
+    /// Writes `buffer.len()` bytes starting at the given address. If a page
+    /// is not allocated, it will be allocated on demand. If allocation fails,
+    /// an error code is returned.
+    ///
+    /// This method is optimized for performance and handles:
+    /// - Writing across page boundaries
+    /// - Automatic page allocation on write
+    /// - Partial page writes
+    /// - Address wraparound (writing past 0xFFFFFFFF continues from 0x00000000)
+    ///
+    /// # Arguments
+    /// * `address` - The starting address to write to
+    /// * `buffer` - The buffer containing data to write
+    ///
+    /// # Returns
+    /// - `MEM_SUCCESS` (0): Write completed successfully
+    /// - `MEM_ERR_NO_L2_TABLES` (1): No more L2 tables available
+    /// - `MEM_ERR_PAGE_LIMIT` (2): Instance page limit reached
+    /// - `MEM_ERR_NO_PAGES_AVAILABLE` (3): PageStore has no available pages
+    ///
+    /// # Address Wraparound
+    /// The method uses `wrapping_add` for address arithmetic, so writes that
+    /// extend past the end of the 32-bit address space (0xFFFFFFFF) will wrap
+    /// around to the beginning (0x00000000) and continue writing.
+    pub fn write(&mut self, address: u32, buffer: &[u8]) -> i32 {
+        let mut addr = address;
+        let mut offset = 0;
+        let len = buffer.len();
+
+        while offset < len {
+            // Calculate how many bytes to write to current page
+            let page_offset = (addr & PAGE_OFFSET_MASK) as usize;
+            let bytes_in_page = (PAGE_SIZE - page_offset).min(len - offset);
+
+            // Ensure page is allocated
+            let page_base = addr & !PAGE_OFFSET_MASK;
+            let alloc_result = self.allocate_page(page_base);
+            if alloc_result != MEM_SUCCESS {
+                return alloc_result;
+            }
+
+            // Extract L1 and L2 indices to get the page
+            let l1_idx = ((addr >> L1_INDEX_SHIFT) & L1_INDEX_MASK) as usize;
+            let l2_idx = ((addr >> L2_INDEX_SHIFT) & L2_INDEX_MASK) as usize;
+
+            // Get page index from L2 table (guaranteed to exist after allocate_page)
+            unsafe {
+                let l2_table_idx = self.l1_table[l1_idx];
+                let l2_entry_offset = (l2_table_idx as usize) * L2_TABLE_SIZE + l2_idx;
+                let page_idx = *self.l2_tables.add(l2_entry_offset);
+
+                // Write data to the page
+                let page_addr = self
+                    .page_memory
+                    .add(page_idx as usize * PAGE_SIZE + page_offset);
+                std::ptr::copy_nonoverlapping(buffer[offset..].as_ptr(), page_addr, bytes_in_page);
+            }
+
+            offset += bytes_in_page;
+            addr = addr.wrapping_add(bytes_in_page as u32);
+        }
+
+        MEM_SUCCESS
     }
 
     /// Reset this memory instance, returning all pages to the pool
