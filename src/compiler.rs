@@ -13,31 +13,29 @@ mod arm64 {
 }
 
 /// Compiles RISC-V instructions to ARM64 machine code
-pub struct Compiler {
-    /// Buffer to hold generated ARM64 instructions
-    code: Vec<u32>,
-}
+pub struct Compiler;
 
 impl Compiler {
     /// Creates a new compiler instance
     pub fn new() -> Self {
-        Self { code: Vec::new() }
+        Self
     }
 
     /// Compiles a slice of RISC-V instructions to ARM64
     ///
     /// Currently only emits a single RET instruction regardless of input
-    pub fn compile(&mut self, _instructions: &[Instruction]) -> Vec<u8> {
+    /// Returns the number of bytes written to the buffer
+    pub fn compile(&mut self, _instructions: &[Instruction], buffer: &mut [u8]) -> usize {
         // For now, just emit a RET instruction
-        self.code.clear();
-        self.code.push(arm64::RET);
+        let ret_bytes = arm64::RET.to_le_bytes();
 
-        // Convert to bytes (little-endian)
-        let mut bytes = Vec::with_capacity(self.code.len() * 4);
-        for instruction in &self.code {
-            bytes.extend_from_slice(&instruction.to_le_bytes());
+        // Ensure buffer has enough space
+        if buffer.len() < ret_bytes.len() {
+            return 0;
         }
-        bytes
+
+        buffer[..ret_bytes.len()].copy_from_slice(&ret_bytes);
+        ret_bytes.len()
     }
 }
 

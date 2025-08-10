@@ -98,15 +98,25 @@ impl Module {
             instructions.push(instr);
         }
 
-        // Compile to ARM64
-        let mut compiler = Compiler::new();
-        let arm64_code = compiler.compile(&instructions);
-
-        // Copy compiled code to the code buffer
-        self.code_size = arm64_code.len();
+        // Ensure the buffer is writable (might have been set to exec-only previously)
         unsafe {
-            ptr::copy_nonoverlapping(arm64_code.as_ptr(), self.code_buffer, self.code_size);
+            if libc::mprotect(
+                self.code_buffer as *mut libc::c_void,
+                self.code_buffer_size,
+                libc::PROT_READ | libc::PROT_WRITE,
+            ) != 0
+            {
+                return Err(CompileError::AllocationFailed);
+            }
+        }
 
+        // Compile to ARM64 directly into the code buffer
+        let mut compiler = Compiler::new();
+        let buffer_slice =
+            unsafe { std::slice::from_raw_parts_mut(self.code_buffer, self.code_buffer_size) };
+        self.code_size = compiler.compile(&instructions, buffer_slice);
+
+        unsafe {
             // Make the code executable
             if libc::mprotect(
                 self.code_buffer as *mut libc::c_void,
