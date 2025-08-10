@@ -1,18 +1,20 @@
-use crate::module::Module;
+use crate::{memory::Memory, module::Module};
 use std::ptr;
 
 /// Runtime instance for executing compiled RISC-V code
-#[derive(Default)]
 pub struct Instance {
     /// Pointer to the compiled module (null if detached)
     module: *mut Module,
+    /// Memory system for this instance (Box for stable pointer)
+    memory: Box<Memory>,
 }
 
 impl Instance {
-    /// Create a new instance
-    pub fn new() -> Self {
+    /// Create a new instance with the given memory
+    pub fn new(memory: Memory) -> Self {
         Instance {
             module: ptr::null_mut(),
+            memory: Box::new(memory),
         }
     }
 

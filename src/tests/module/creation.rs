@@ -1,4 +1,8 @@
-use crate::{instance::Instance, module::Module};
+use crate::{
+    instance::Instance,
+    memory::{Memory, PageStore},
+    module::Module,
+};
 
 #[test]
 fn compile_empty() {
@@ -21,17 +25,22 @@ fn initial_instance_count() {
 
 #[test]
 fn attach_instance() {
+    let mut store = PageStore::new(100);
+    let memory = Memory::new(&mut store, 50, 10);
     let mut module = Module::compile(&[]).unwrap();
-    let mut instance = Instance::new();
+    let mut instance = Instance::new(memory);
     instance.attach(&mut module);
     assert_eq!(module.instance_count, 1);
 }
 
 #[test]
 fn detach_instance() {
+    let mut store = PageStore::new(100);
+    let memory1 = Memory::new(&mut store, 50, 10);
+    let memory2 = Memory::new(&mut store, 50, 10);
     let mut module = Module::compile(&[]).unwrap();
-    let mut instance1 = Instance::new();
-    let mut instance2 = Instance::new();
+    let mut instance1 = Instance::new(memory1);
+    let mut instance2 = Instance::new(memory2);
     instance1.attach(&mut module);
     instance2.attach(&mut module);
     assert_eq!(module.instance_count, 2);
@@ -41,10 +50,12 @@ fn detach_instance() {
 
 #[test]
 fn multiple_attachments() {
+    let mut store = PageStore::new(500);
     let mut module = Module::compile(&[]).unwrap();
     let mut instances = Vec::new();
     for _ in 0..5 {
-        let mut instance = Instance::new();
+        let memory = Memory::new(&mut store, 50, 10);
+        let mut instance = Instance::new(memory);
         instance.attach(&mut module);
         instances.push(instance);
     }
@@ -69,8 +80,10 @@ fn drop_with_multiple_attached_instances() {
 
 #[test]
 fn drop_after_detach() {
+    let mut store = PageStore::new(100);
+    let memory = Memory::new(&mut store, 50, 10);
     let mut module = Module::compile(&[]).unwrap();
-    let mut instance = Instance::new();
+    let mut instance = Instance::new(memory);
     instance.attach(&mut module);
     assert_eq!(module.instance_count, 1);
     drop(instance);

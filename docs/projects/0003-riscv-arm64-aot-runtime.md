@@ -299,7 +299,7 @@ src/tests/
 #### Instance Core 🚧
 - ✅ Instance struct creation - Create Instance struct with ability to attach/detach from modules
 - ✅ Module attachment - Implement attach/detach methods with proper reference counting on module
-- 📋 Instance memory integration - Add Memory struct to Instance with Box<Memory> for stable pointer
+- ✅ Instance memory integration - Add Memory struct to Instance with Box<Memory> for stable pointer
 - 📋 x30 storage setup - Add Box<u32> for x30 register storage in Instance
 - 📋 Spill stack allocation - Add spill stack for register save/restore during syscalls
 - 📋 Register read/write API - Implement read_register/write_register methods with x30 special handling and tests
