@@ -27,12 +27,13 @@ Implementation of an Ahead-of-Time (AOT) compiler runtime that translates RISC-V
 
 #### Page-Based Memory System
 - **Address Space**: 32-bit RISC-V address space
-- **Page Size**: 4KB (2^12 bytes)
-- **Address Split**: High 20 bits = page number, Low 12 bits = page offset
-- **Page Table**: 2MB fixed array (2^20 entries × 2 bytes per entry)
-- **Page Table Entry**: 16-bit index into page array (supports up to 65,536 pages = 256MB total)
+- **Page Size**: 16KB (2^14 bytes)
+- **Address Split**: Bits 31-24 = L1 index (8 bits), Bits 23-14 = L2 index (10 bits), Bits 13-0 = page offset
+- **Page Table**: Two-level hierarchy with L1 table and L2 tables
+- **Page Table Entry**: 16-bit index into global page pool (supports up to 65,536 pages = 1GB total)
 - **Page Permissions**: Read/write only (no execute flag needed for VM memory)
 - **Memory Object**: Stored as `Box<Memory>` so native ARM64 code can access via direct pointer
+- **Global Page Pool**: Shared across all VM instances for efficient memory management
 
 #### Other Memory Components
 - **Code Buffer**: Fixed size for AOT-compiled ARM64 code, made executable, tracks emission position
@@ -64,19 +65,15 @@ Implementation of an Ahead-of-Time (AOT) compiler runtime that translates RISC-V
 - No RISC-V register storage (except x30)
 
 ### Memory Management (`src/memory.rs`)
+- **Global PageStore**: Pre-allocated page pool shared across all VM instances
 - **Memory Struct**: Stored in `Box<Memory>` for stable pointer access from native code
-- **Page Table**: 2MB array of 2^20 u16 entries, each indexing into page array
-- **Page Structure**: 
-  - 4KB data buffer for actual memory contents
-  - Start address field for remapping/reset functionality
-  - No additional flags (pages are always read/write)
-- **Page Pool**: Pre-allocated array of pages to avoid runtime allocation
-- **Active Tracking**: Track which pages are actually mapped/in-use
+  - Contains page table and references to allocated pages from global pool
+- **Page Table**: Two-level hierarchy - L1 table points to L2 tables, L2 entries index into global page pool
+- **Page Structure**: 16KB data buffer for actual memory contents
 - **Memory Operations**:
   - Native ARM64 code directly accesses memory via pointer
-  - All page lookups and manipulation done by AOT-compiled code
-  - Bounds-checked read/write helper methods for VM initialization
-- **Reset Functionality**: Clear mapped pages and reset page table between executions
+  - Native ARM64 code calls Memory's allocate_page method when page table lookup finds unallocated page
+- **Reset Functionality**: Return pages to global pool and clear page table
 - **Sparse Mapping**: Only allocate pages that are actually accessed (lazy allocation)
 
 ### ARM64 Encoder (`src/encoder.rs`)
@@ -239,13 +236,14 @@ src/tests/
 
 ### Phase 1: Foundation Infrastructure 📋
 
-#### Memory System 📋
-- 📋 Memory struct and page table - Create Memory struct with page table array, page pool, and basic structure
-- 📋 Page allocation and management - Implement lazy page allocation from pre-allocated pool with tests
+#### Memory System ✅
+- ✅ Global PageStore - Create static PageStore with pre-allocated page pool
+- ✅ Memory struct and page table - Create Memory struct with page table array referencing global pool
+- ✅ Page allocation and management - Implement lazy page allocation from global pool with tests
 - 📋 Memory ARM64 access routines - Native ARM64 assembly for page table lookup and memory access
-- 📋 Memory helper wrappers - Rust wrappers around ARM64 routines for VM read_memory/write_memory
-- 📋 Memory reset functionality - Implement reset between executions with tests
-- 📋 Memory boundary tests - Test page boundaries, sparse allocation, stress tests
+- ✅ Memory helper wrappers - Rust wrappers for VM read_memory/write_memory methods
+- ✅ Memory reset functionality - Return pages to global pool and clear page table with tests
+- ✅ Memory boundary tests - Test page boundaries, sparse allocation, stress tests
 
 #### Virtual Machine Core 📋
 - 📋 VM struct and initialization - Create VirtualMachine struct with syscall handler, x30 storage, memory box with tests
