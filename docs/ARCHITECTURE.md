@@ -2,7 +2,7 @@
 
 The project is structured as a Rust library with an example binary.
 
-## Core Modules
+## Current Modules
 
 ### `src/lib.rs`
 Library entry point that exports public APIs
@@ -11,13 +11,44 @@ Library entry point that exports public APIs
 Example binary demonstrating instruction decoding
 
 ### `src/instruction.rs`
-Core instruction representation, decoding, and encoding logic
+Core instruction representation, decoding, and encoding logic (implemented)
 - `Instruction` enum with variants for each RISC-V instruction (Add, Sub, etc.)
 - `decode()` method that extracts fields from 32-bit instruction words using bitmasking
 - `encode()` method that converts Instruction variants back to 32-bit instruction words
 - Display trait implementation for assembly-style output
 - `EncodeError` enum for encoding error handling (InvalidRegister, InvalidImmediate, NotImplemented)
 - Supports RV32IM: base integer instructions plus M extension (multiply/divide)
+
+### `src/memory.rs`
+Page-based memory system (implemented)
+- 32-bit RISC-V address space with 16KB pages (2^14 bytes)
+- Two-level page table hierarchy:
+  - L1 table: 256 entries (bits 31-24 = 8 bits)
+  - L2 tables: 1024 entries each (bits 23-14 = 10 bits)
+  - Page offset: bits 13-0 (16KB pages)
+- Page table entry: 16-bit index into global page pool (supports 65,536 pages = 1GB total)
+- Global PageStore: Pre-allocated page pool shared across all instances
+- Memory struct stored as `Box<Memory>` for stable pointer access from native code
+- Sparse allocation with lazy page allocation
+- Page structure: 16KB data buffer
+- Memory operations: `read()` and `write()` for arbitrary buffer access
+- Reset functionality: Return pages to global pool and clear page table
+- Direct pointer access from native ARM64 code (planned)
+
+### `src/module.rs`
+Compiled ARM64 code module (partially implemented)
+- Fixed-size code buffer for compiled ARM64 instructions (allocated with MAP_JIT on macOS)
+- Instance count tracking to prevent dropping while instances attached
+- Memory pointer storage (`Box<*mut Memory>`) for attached instance's memory
+- Public API: `new()`, `set_code()` (compilation stub)
+- Planned: PC to code offset mapping table, code compilation, memory protection
+
+### `src/instance.rs`
+Runtime instance for executing a compiled Module (partially implemented)
+- Module attachment/detachment with reference counting
+- Memory system as `Box<Memory>` with stable pointer for native code
+- Public API: `new()`, `attach()`, `detach()`, `attached()`, `memory()`, `memory_mut()`
+- Planned: x30 storage, spill stack, syscall handler, execution methods
 
 ## Planned Modules
 
@@ -46,43 +77,8 @@ Per-instruction RISC-V to ARM64 translation logic
 - ECALL/EBREAK system instruction handling
 - Returns ARM64 instruction sequences for compiler to emit
 
-### `src/module.rs`
-Compiled ARM64 code module (immutable, reusable)
-- Fixed-size code buffer containing compiled ARM64 instructions
-- PC to code offset mapping table for indirect jumps
-- Stores `Box<u64>` pointer to active Instance's memory (set when Instance calls)
-- Since runtime is single-threaded, only one Instance runs at a time
-- Compiled code can directly access memory via this fixed pointer
-- Immutable after compilation (except for memory pointer update)
-- Code buffer made executable after compilation
-- Public API: `compile()`
 
-### `src/instance.rs`
-Runtime instance for executing a compiled Module
-- Reference to compiled Module (Arc for sharing)
-- Generic syscall handler: `S: Fn(&mut Instance<S>, u32) -> Result<(), RuntimeError>`
-- x30 register stored as `Box<u32>` for memory access
-- Memory system as `Box<Memory>` with stable pointer for native code
-- Sets Module's memory pointer to its Memory before execution
-- Spill stack for register save/restore during syscalls
-- No RISC-V register storage (except x30) - registers live in ARM64 hardware
-- Public API: `new()`, `call_function()`, `read/write_register()`, `read/write_memory()`, `run()`, `reset()`
 
-### `src/memory.rs`
-Page-based memory system
-- 32-bit RISC-V address space with 16KB pages (2^14 bytes)
-- Two-level page table hierarchy:
-  - L1 table: 256 entries (bits 31-24 = 8 bits)
-  - L2 tables: 1024 entries each (bits 23-14 = 10 bits)
-  - Page offset: bits 13-0 (16KB pages)
-- Page table entry: 16-bit index into global page pool (supports 65,536 pages = 1GB total)
-- Global PageStore: Pre-allocated page pool shared across all instances
-- Memory struct stored as `Box<Memory>` for stable pointer access from native code
-- Sparse allocation with lazy page allocation
-- Page structure: 16KB data buffer
-- Memory operations: Native ARM64 code directly accesses via pointer
-- Reset functionality: Return pages to global pool and clear page table
-- Direct pointer access from native ARM64 code
 
 ## Test Structure
 
@@ -97,11 +93,28 @@ RISC-V instruction tests (subfolders contain tests for each instruction type)
 - `display/` - Tests for instruction display formatting
 - `error.rs` - Error type tests
 
+#### `memory/`
+Memory system tests (implemented)
+- PageStore creation, limits, and drop behavior
+- Memory struct creation and management
+- Page allocation (single, multiple, L2 tables)
+- Memory reset and reallocation
+- Page boundary handling
+- Stress tests and edge cases
+
+#### `module/`
+Module tests (partially implemented)
+- Module creation and memory allocation
+- Instance tracking and drop protection
+- Code size validation
+
+#### `instance/`
+Instance tests (partially implemented)
+- Instance creation and module attachment
+- Memory integration
+
 #### Planned Test Modules
 - `encoder/` - ARM64 encoder tests
-- `memory/` - Memory system tests
 - `compiler/` - Compiler tests
 - `translator/` - Translator tests
-- `module/` - Module compilation and metadata tests
-- `instance/` - Instance runtime and execution tests
 - `integration/` - Combined module+instance integration tests

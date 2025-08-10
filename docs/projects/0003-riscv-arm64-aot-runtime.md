@@ -135,11 +135,11 @@ impl Instance {
     pub fn attach(&mut self, module: &mut Module)  // Attach to a module (auto-detaches from previous)
     pub fn detach(&mut self)  // Detach from current module
     pub fn attached(&self) -> bool  // Check if attached to a module
+    pub fn memory(&self) -> &Memory  // Get reference to instance's memory
+    pub fn memory_mut(&mut self) -> &mut Memory  // Get mutable reference to instance's memory
     pub fn call_function(&mut self, address: u32, args: &[u32]) -> Result<u32>  // Executes compiled code
     pub fn read_register(&self, reg: u8) -> u32
     pub fn write_register(&mut self, reg: u8, value: u32)
-    pub fn read_memory(&self, address: u32, size: usize) -> Result<Vec<u8>>
-    pub fn write_memory(&mut self, address: u32, data: &[u8]) -> Result<()>
     pub fn run(&mut self) -> Result<RunResult>
     pub fn reset(&mut self)  // Reset instance state while keeping the module
 }
@@ -282,7 +282,6 @@ src/tests/
 - ✅ Global PageStore - Create static PageStore with pre-allocated page pool
 - ✅ Memory struct and page table - Create Memory struct with page table array referencing global pool
 - ✅ Page allocation and management - Implement lazy page allocation from global pool with tests
-- ✅ Memory helper wrappers - Rust wrappers for instance read_memory/write_memory methods
 - ✅ Memory reset functionality - Return pages to global pool and clear page table with tests
 - ✅ Memory boundary tests - Test page boundaries, sparse allocation, stress tests
 - ✅ Memory test coverage - Achieved 100% test coverage for memory.rs

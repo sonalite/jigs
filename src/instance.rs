@@ -50,6 +50,16 @@ impl Instance {
     pub fn attached(&self) -> bool {
         !self.module.is_null()
     }
+
+    /// Get a reference to this instance's memory
+    pub fn memory(&self) -> &Memory {
+        &self.memory
+    }
+
+    /// Get a mutable reference to this instance's memory
+    pub fn memory_mut(&mut self) -> &mut Memory {
+        &mut self.memory
+    }
 }
 
 impl Drop for Instance {
