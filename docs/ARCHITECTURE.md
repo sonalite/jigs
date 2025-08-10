@@ -50,24 +50,25 @@ Runtime instance for executing a compiled Module (partially implemented)
 - Public API: `new()`, `attach()`, `detach()`, `attached()`, `memory()`, `memory_mut()`
 - Planned: x30 storage, spill stack, syscall handler, execution methods
 
-## Planned Modules
+## Current Modules (continued)
 
-### `src/encoder.rs`
-ARM64 instruction encoding for AOT compilation
+### `src/arm64.rs`
+ARM64 instruction encoding for AOT compilation (partially implemented)
 - ARM64 machine code generation helpers
-- Register and immediate encoding utilities
-- Branch offset calculations
-- ARM64 instruction format constants and utilities
+- ARM64 instruction format constants (RET instruction implemented)
+- Planned: Register and immediate encoding utilities
+- Planned: Branch offset calculations
 
 ### `src/compiler.rs`
-AOT compiler managing RISC-V to ARM64 translation
-- Single-pass compilation orchestration
-- Direct code emission to Module's code buffer
-- PC tracking and RISC-V PC to ARM64 offset mapping
-- Branch patching with forward branch fixup list
-- Buffer management with write position tracking
-- Creates immutable Module with compiled code and metadata
-- Calls translator for per-instruction logic
+AOT compiler managing RISC-V to ARM64 translation (partially implemented)
+- Compiles RISC-V instructions to ARM64 machine code
+- Accepts external buffer for code emission
+- Currently emits single RET instruction for all inputs (stub implementation)
+- Planned: PC tracking and RISC-V PC to ARM64 offset mapping
+- Planned: Branch patching with forward branch fixup list
+- Planned: Full instruction translation via translator module
+
+## Planned Modules
 
 ### `src/translator.rs`
 Per-instruction RISC-V to ARM64 translation logic
@@ -113,8 +114,18 @@ Instance tests (partially implemented)
 - Instance creation and module attachment
 - Memory integration
 
+#### `arm64/`
+ARM64 encoder tests (planned)
+- Instruction encoding tests
+- Register encoding tests
+- Immediate value encoding tests
+
+#### `compiler/`
+Compiler tests (partially implemented)
+- Basic RET compilation test
+- Buffer management tests
+- Multiple instruction compilation tests
+
 #### Planned Test Modules
-- `encoder/` - ARM64 encoder tests
-- `compiler/` - Compiler tests
 - `translator/` - Translator tests
 - `integration/` - Combined module+instance integration tests

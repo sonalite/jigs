@@ -91,7 +91,7 @@ Implementation of an Ahead-of-Time (AOT) compiler runtime that translates RISC-V
 - **Reset Functionality**: Return pages to global pool and clear page table
 - **Sparse Mapping**: Only allocate pages that are actually accessed (lazy allocation)
 
-### ARM64 Encoder (`src/encoder.rs`)
+### ARM64 Encoder (`src/arm64.rs`)
 - Instruction encoding helpers for ARM64 machine code generation
 - Register and immediate value encoding
 - Branch offset calculation and encoding
@@ -153,7 +153,7 @@ Coverage must be maintained at 100% for all new files.
 
 ```
 src/tests/
-├── encoder/           # ARM64 encoder module tests
+├── arm64/             # ARM64 encoder module tests
 │   ├── instructions/  # ARM64 instruction encoding
 │   │   ├── arithmetic.rs  # ADD, SUB, MUL, etc.
 │   │   ├── logical.rs     # AND, ORR, EOR, MVN
@@ -312,7 +312,7 @@ src/tests/
 - 📋 Instance reset functionality - Reset instance state while keeping module with tests
 
 #### ARM64 Encoder Foundation 📋
-- 📋 Create encoder.rs module - Create empty encoder.rs file and add to lib.rs
+- 📋 Create arm64.rs module - Create empty arm64.rs file and add to lib.rs
 - 📋 ARM64 instruction format constants - Add instruction format constants and masks
 - 📋 Basic register encoding - Implement encoding for X0-X31 registers
 - 📋 Special register encoding - Add support for SP and XZR registers
@@ -321,7 +321,7 @@ src/tests/
 
 #### Barebones Compiler and Execution 📋
 - 📋 Minimal compiler setup - Create basic Compiler struct that can emit RET instruction
-- 📋 RET instruction encoding - Implement ARM64 RET instruction encoding in encoder
+- 📋 RET instruction encoding - Implement ARM64 RET instruction encoding in arm64 module
 - 📋 Make code buffer executable - Set up mmap with PROT_EXEC for ARM64 code execution
 - 📋 Basic Module::set_code - Implement minimal set_code() that compiles single RET instruction
 - 📋 Memory pointer setup - Add logic to set Module's memory pointer before execution
