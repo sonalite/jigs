@@ -275,7 +275,6 @@ src/tests/
 - ✅ Global PageStore - Create static PageStore with pre-allocated page pool
 - ✅ Memory struct and page table - Create Memory struct with page table array referencing global pool
 - ✅ Page allocation and management - Implement lazy page allocation from global pool with tests
-- 📋 Memory ARM64 access routines - Native ARM64 assembly for page table lookup and memory access
 - ✅ Memory helper wrappers - Rust wrappers for instance read_memory/write_memory methods
 - ✅ Memory reset functionality - Return pages to global pool and clear page table with tests
 - ✅ Memory boundary tests - Test page boundaries, sparse allocation, stress tests
