@@ -159,13 +159,14 @@ src/tests/
 │   ├── immediates.rs  # Immediate value encoding and validation
 │   └── offsets.rs     # Branch offset calculations
 │
-├── memory/            # Memory system tests
-│   ├── pages.rs       # Page allocation and management
-│   ├── table.rs       # Page table operations
-│   ├── sparse.rs      # Sparse allocation tests
-│   ├── boundaries.rs  # Page boundary handling
-│   ├── reset.rs       # Memory reset functionality
-│   └── stress.rs      # Memory stress tests
+├── memory/            # Memory system tests ✅
+│   ├── pagestore.rs   # PageStore tests (creation, limits, drop)
+│   ├── memory.rs      # Memory struct tests (creation, debug, limits)
+│   ├── allocation.rs  # Page allocation tests (single, multiple, L2 tables)
+│   ├── reset.rs       # Memory reset tests (cleanup, reallocation)
+│   ├── boundaries.rs  # Page boundary tests (address limits, L1/L2 indices)
+│   ├── stress.rs      # Stress tests (many pages, cycles, multiple instances)
+│   └── edge_cases.rs  # Edge case tests (zero capacity, exact limits)
 │
 ├── compiler/          # Compiler module tests
 │   ├── emission.rs    # Code emission and buffer management
@@ -278,6 +279,7 @@ src/tests/
 - ✅ Memory helper wrappers - Rust wrappers for instance read_memory/write_memory methods
 - ✅ Memory reset functionality - Return pages to global pool and clear page table with tests
 - ✅ Memory boundary tests - Test page boundaries, sparse allocation, stress tests
+- ✅ Memory test coverage - Achieved 100% test coverage for memory.rs
 
 #### Module Core 📋
 - 📋 Module struct - Create Module struct with code buffer, PC mapping table with tests

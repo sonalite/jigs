@@ -24,6 +24,18 @@
 /// if dropped while Memory instances still exist.
 use std::fmt;
 
+/// Success return code for memory operations
+pub const MEM_SUCCESS: i32 = 0;
+
+/// Error: No more L2 tables available
+pub const MEM_ERR_NO_L2_TABLES: i32 = 1;
+
+/// Error: Instance page limit reached
+pub const MEM_ERR_PAGE_LIMIT: i32 = 2;
+
+/// Error: PageStore has no available pages
+pub const MEM_ERR_NO_PAGES_AVAILABLE: i32 = 3;
+
 /// Size of a memory page in bytes (16KB)
 pub const PAGE_SIZE: usize = 1 << 14;
 
@@ -146,14 +158,14 @@ pub struct Memory {
 
     /// Level 1 page table: maps L1 index to L2 table index (0-254) or UNMAPPED_L2_TABLE (0xFF)
     /// Using u8 saves memory: 1024 entries × 1 byte = 1KB
-    l1_table: Box<[u8; L1_TABLE_SIZE]>,
+    pub l1_table: Box<[u8; L1_TABLE_SIZE]>,
 
     /// Pool of Level 2 page tables: each maps L2 index to global page index
     /// Pre-allocated as fixed array for predictable memory usage and ARM64 access
-    l2_tables: Box<[Vec<u16>]>,
+    pub l2_tables: Box<[Vec<u16>]>,
 
     /// Fixed array of allocated page indices for ARM64 access
-    allocated_indices: Box<[u16]>,
+    pub allocated_indices: Box<[u16]>,
 
     /// Number of pages currently allocated
     pub num_pages: usize,
@@ -176,6 +188,7 @@ impl Memory {
     ///
     /// # Panics
     /// - Panics if max_pages > MAX_PAGES (65535)
+    /// - Panics if max_pages > PageStore's available pages
     /// - Panics if max_l2_tables > MAX_L2_TABLES (255)
     pub fn new(page_store: &mut PageStore, max_pages: usize, max_l2_tables: usize) -> Self {
         assert!(
@@ -183,6 +196,12 @@ impl Memory {
             "max_pages {} exceeds maximum allowed ({})",
             max_pages,
             MAX_PAGES
+        );
+        assert!(
+            max_pages <= page_store.num_available_pages,
+            "max_pages {} exceeds available pages in PageStore ({})",
+            max_pages,
+            page_store.num_available_pages
         );
         assert!(
             max_l2_tables <= MAX_L2_TABLES,
@@ -212,7 +231,12 @@ impl Memory {
     }
 
     /// Allocate a page for the given address if not already allocated
-    /// Returns true if successful (either newly allocated or already mapped)
+    ///
+    /// # Returns
+    /// - `MEM_SUCCESS` (0): Page successfully allocated or already mapped
+    /// - `MEM_ERR_NO_L2_TABLES` (1): No more L2 tables available
+    /// - `MEM_ERR_PAGE_LIMIT` (2): Instance page limit reached
+    /// - `MEM_ERR_NO_PAGES_AVAILABLE` (3): PageStore has no available pages
     ///
     /// # Two-Layer Allocation Process
     /// 1. Extract L1 and L2 indices from the address
@@ -220,7 +244,7 @@ impl Memory {
     /// 3. If not, allocate a new L2 table from the pool
     /// 4. Look up the page in the L2 table
     /// 5. If unmapped, allocate a page from the PageStore
-    pub fn allocate_page(&mut self, address: u32) -> bool {
+    pub fn allocate_page(&mut self, address: u32) -> i32 {
         // Extract L1 and L2 indices from address
         // Address layout: [L1 Index: 10 bits][L2 Index: 8 bits][Page Offset: 14 bits]
         let l1_idx = ((address >> L1_INDEX_SHIFT) & L1_INDEX_MASK) as usize;
@@ -230,7 +254,7 @@ impl Memory {
         let l2_table_idx = if self.l1_table[l1_idx] == UNMAPPED_L2_TABLE {
             // Need to allocate new L2 table
             if self.num_l2_tables >= self.max_l2_tables {
-                return false; // No more L2 tables available
+                return MEM_ERR_NO_L2_TABLES;
             }
 
             let new_l2_idx = self.num_l2_tables as u8;
@@ -246,12 +270,12 @@ impl Memory {
         // Check if page is already mapped in L2 table
         let l2_table = &self.l2_tables[l2_table_idx as usize];
         if l2_table[l2_idx] != UNMAPPED_PAGE {
-            return true; // Page already mapped
+            return MEM_SUCCESS; // Page already mapped
         }
 
         // Check if we have room for another page
         if self.num_pages >= self.max_pages {
-            return false;
+            return MEM_ERR_PAGE_LIMIT;
         }
 
         // Allocate from PageStore
@@ -260,7 +284,7 @@ impl Memory {
 
             // Check if PageStore has available pages
             if store.num_available_pages == 0 {
-                return false;
+                return MEM_ERR_NO_PAGES_AVAILABLE;
             }
 
             // Get next available page
@@ -275,7 +299,7 @@ impl Memory {
             let l2_table = &mut self.l2_tables[l2_table_idx as usize];
             l2_table[l2_idx] = page_idx;
 
-            true
+            MEM_SUCCESS
         }
     }
 
