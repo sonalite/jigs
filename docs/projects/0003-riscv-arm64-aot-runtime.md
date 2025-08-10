@@ -292,9 +292,10 @@ src/tests/
 - ✅ Module struct with instance tracking - Create Module struct with code buffer and instance count tracking to detect if dropped with instances
 - ✅ Module drop protection - Implement drop checks that prevent module from being dropped while instances are attached
 - ✅ Memory pointer for attached instance - Add Box<*mut Memory> to store pointer to attached instance's memory (pointer to pointer for swappability)
-- 📋 Define ARM64_CODE_SIZE_MULTIPLIER constant - Define constant for maximum ARM64 code size as multiple of RISC-V code size
-- 📋 Calculate code buffer size - Accept max_code_size parameter in Module::compile, multiply by ARM64_CODE_SIZE_MULTIPLIER constant
-- 📋 Create executable memory - Initially allocate code buffer with PROT_READ | PROT_WRITE permissions and MAP_JIT flag for macOS
+- ✅ Define ARM64_CODE_SIZE_MULTIPLIER constant - Define constant for maximum ARM64 code size as multiple of RISC-V code size
+- ✅ Calculate code buffer size - Accept max_code_size parameter in Module::compile, multiply by ARM64_CODE_SIZE_MULTIPLIER constant
+- ✅ Create executable memory - Initially allocate code buffer with PROT_READ | PROT_WRITE permissions and MAP_JIT flag for macOS
+- 📋 Revisit ARM64_CODE_SIZE_MULTIPLIER - After implementing all compiler instructions, revisit the multiplier value for correctness based on actual expansion ratios
 - 📋 Basic Module::compile stub - Create Module::compile that returns empty Module for testing
 - 📋 Mark memory as executable - After compilation, change permissions to PROT_READ | PROT_EXEC using mprotect
 - 📋 PC mapping table - Add PC to code offset mapping table to Module
