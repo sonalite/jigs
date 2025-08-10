@@ -91,3 +91,22 @@ fn detach_unattached() {
     instance.detach(); // Should not panic
     assert!(!instance.attached());
 }
+
+#[test]
+fn memory_access() {
+    let mut store = PageStore::new(100);
+    let memory = Memory::new(&mut store, 50, 10);
+    let instance = Instance::new(memory);
+    let mem_ref = instance.memory();
+    assert_eq!(mem_ref.max_pages, 50);
+}
+
+#[test]
+fn memory_mut_access() {
+    let mut store = PageStore::new(100);
+    let memory = Memory::new(&mut store, 50, 10);
+    let mut instance = Instance::new(memory);
+    let mem_mut = instance.memory_mut();
+    let page_result = mem_mut.allocate_page(0);
+    assert_eq!(page_result, 0);
+}
