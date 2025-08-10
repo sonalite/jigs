@@ -36,6 +36,7 @@
 - Before committing: ensure `cargo build`, `cargo test`, `cargo test --doc`, `cargo tarpaulin`, `cargo fmt -- --check`, and `cargo clippy` produce no warnings
 - Documentation: Keep all module-level documentation up-to-date, including examples in doc comments
 - Error handling: Always use Result for error handling, never panic
+- **Threading and synchronization**: Never use Mutex or other synchronization primitives. The runtime is single-threaded by design
 
 ## Pre-Commit Checklist
 Before committing any changes, ensure all of the following pass without warnings:

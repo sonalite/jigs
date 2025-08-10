@@ -5,8 +5,10 @@
 //! - Gas-metered execution for controlled resource usage
 
 pub mod instruction;
+pub mod memory;
 
 #[cfg(test)]
 mod tests;
 
 pub use instruction::{EncodeError, Instruction};
+pub use memory::{Memory, PageStore};
