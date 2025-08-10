@@ -120,6 +120,8 @@ fn allocated_indices_tracking() {
     assert_eq!(mem.allocate_page(PAGE_SIZE as u32), MEM_SUCCESS);
 
     // Verify allocated indices are tracked correctly
-    assert_eq!(mem.allocated_indices[0], 9); // First allocation gets last available
-    assert_eq!(mem.allocated_indices[1], 8); // Second gets next
+    unsafe {
+        assert_eq!(*mem.allocated_indices.add(0), 9); // First allocation gets last available
+        assert_eq!(*mem.allocated_indices.add(1), 8); // Second gets next
+    }
 }

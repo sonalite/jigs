@@ -5,24 +5,24 @@ fn basic() {
     let store = PageStore::new(10);
     assert_eq!(store.num_available_pages, 10);
     assert_eq!(store.instance_count, 0);
-    assert_eq!(store.page_memory.len(), 10 * PAGE_SIZE);
-    assert_eq!(store.available_pages.len(), 10);
+    assert_eq!(store.page_memory_size, 10 * PAGE_SIZE);
+    assert_eq!(store.available_pages_capacity, 10);
 }
 
 #[test]
 fn zero_pages() {
     let store = PageStore::new(0);
     assert_eq!(store.num_available_pages, 0);
-    assert_eq!(store.page_memory.len(), 0);
-    assert_eq!(store.available_pages.len(), 0);
+    assert_eq!(store.page_memory_size, 0);
+    assert_eq!(store.available_pages_capacity, 0);
 }
 
 #[test]
 fn max_pages() {
     let store = PageStore::new(MAX_PAGES);
     assert_eq!(store.num_available_pages, MAX_PAGES);
-    assert_eq!(store.page_memory.len(), MAX_PAGES * PAGE_SIZE);
-    assert_eq!(store.available_pages.len(), MAX_PAGES);
+    assert_eq!(store.page_memory_size, MAX_PAGES * PAGE_SIZE);
+    assert_eq!(store.available_pages_capacity, MAX_PAGES);
 }
 
 #[test]
@@ -34,18 +34,22 @@ fn exceeds_max_pages() {
 #[test]
 fn available_pages_initialization() {
     let store = PageStore::new(5);
-    assert_eq!(store.available_pages[0], 0);
-    assert_eq!(store.available_pages[1], 1);
-    assert_eq!(store.available_pages[2], 2);
-    assert_eq!(store.available_pages[3], 3);
-    assert_eq!(store.available_pages[4], 4);
+    unsafe {
+        assert_eq!(*store.available_pages.add(0), 0);
+        assert_eq!(*store.available_pages.add(1), 1);
+        assert_eq!(*store.available_pages.add(2), 2);
+        assert_eq!(*store.available_pages.add(3), 3);
+        assert_eq!(*store.available_pages.add(4), 4);
+    }
 }
 
 #[test]
 fn page_memory_zeroed() {
     let store = PageStore::new(2);
-    for byte in store.page_memory.iter() {
-        assert_eq!(*byte, 0);
+    unsafe {
+        for i in 0..store.page_memory_size {
+            assert_eq!(*store.page_memory.add(i), 0);
+        }
     }
 }
 

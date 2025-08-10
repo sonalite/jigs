@@ -89,19 +89,32 @@ pub const UNMAPPED_PAGE: u16 = 0xFFFF;
 
 /// Global page store that manages memory pages across all VM instances
 /// Pages are allocated from and returned to a pool
+#[repr(C)]
 pub struct PageStore {
     /// Linear memory for all pages - allows direct offset calculation
     /// Page N starts at offset N * PAGE_SIZE (or N << 14)
-    pub page_memory: Box<[u8]>,
+    /// Offset: 0x00
+    pub page_memory: *mut u8,
+
+    /// Total size of page_memory in bytes
+    /// Offset: 0x08
+    pub page_memory_size: usize,
 
     /// Pool of available page indices - fixed size for ARM64 access
     /// Contains available page indices in positions [0..num_available_pages]
-    pub available_pages: Box<[u16]>,
+    /// Offset: 0x10
+    pub available_pages: *mut u16,
+
+    /// Total capacity of available_pages array
+    /// Offset: 0x18
+    pub available_pages_capacity: usize,
 
     /// Number of pages currently available in the pool
+    /// Offset: 0x20
     pub num_available_pages: usize,
 
     /// Number of Memory instances using this PageStore
+    /// Offset: 0x28
     pub instance_count: usize,
 }
 
@@ -121,16 +134,21 @@ impl PageStore {
         // Pre-allocate linear memory for all pages
         let total_bytes = total_pages * PAGE_SIZE;
         let page_memory = vec![0u8; total_bytes].into_boxed_slice();
+        let page_memory_ptr = Box::into_raw(page_memory) as *mut u8;
 
         // Initialize available pages array [0, 1, 2, ..., total_pages-1]
         let mut available_pages = Vec::with_capacity(total_pages);
         for i in 0..total_pages {
             available_pages.push(i as u16);
         }
+        let available_pages = available_pages.into_boxed_slice();
+        let available_pages_ptr = Box::into_raw(available_pages) as *mut u16;
 
         Self {
-            page_memory,
-            available_pages: available_pages.into_boxed_slice(),
+            page_memory: page_memory_ptr,
+            page_memory_size: total_bytes,
+            available_pages: available_pages_ptr,
+            available_pages_capacity: total_pages,
             num_available_pages: total_pages,
             instance_count: 0,
         }
@@ -145,6 +163,25 @@ impl Drop for PageStore {
                 self.instance_count
             );
         }
+
+        // Clean up allocated memory
+        unsafe {
+            if !self.page_memory.is_null() {
+                let page_memory = Box::from_raw(std::slice::from_raw_parts_mut(
+                    self.page_memory,
+                    self.page_memory_size,
+                ));
+                drop(page_memory);
+            }
+
+            if !self.available_pages.is_null() {
+                let available_pages = Box::from_raw(std::slice::from_raw_parts_mut(
+                    self.available_pages,
+                    self.available_pages_capacity,
+                ));
+                drop(available_pages);
+            }
+        }
     }
 }
 
@@ -152,31 +189,44 @@ impl Drop for PageStore {
 ///
 /// The two-layer design significantly reduces memory overhead for sparse
 /// address space usage, which is common in embedded and sandboxed environments.
+#[repr(C)]
 pub struct Memory {
     /// Pointer to the PageStore - PageStore must outlive this Memory
-    page_store: *mut PageStore,
+    /// Offset: 0x000
+    pub page_store: *mut PageStore,
 
     /// Level 1 page table: maps L1 index to L2 table index (0-254) or UNMAPPED_L2_TABLE (0xFF)
     /// Using u8 saves memory: 1024 entries × 1 byte = 1KB
-    pub l1_table: Box<[u8; L1_TABLE_SIZE]>,
+    /// Embedded directly in the struct for efficient access
+    /// Offset: 0x008
+    /// Size: 0x400 (1024 bytes)
+    pub l1_table: [u8; L1_TABLE_SIZE],
 
     /// Pool of Level 2 page tables: each maps L2 index to global page index
-    /// Pre-allocated as fixed array for predictable memory usage and ARM64 access
-    pub l2_tables: Box<[Vec<u16>]>,
+    /// Pre-allocated as contiguous array for predictable memory usage and ARM64 access
+    /// Each L2 table is L2_TABLE_SIZE (256) u16 entries
+    /// Table N starts at offset N * L2_TABLE_SIZE * sizeof(u16)
+    /// Offset: 0x408
+    pub l2_tables: *mut u16,
 
     /// Fixed array of allocated page indices for ARM64 access
-    pub allocated_indices: Box<[u16]>,
+    /// Offset: 0x410
+    pub allocated_indices: *mut u16,
 
     /// Number of pages currently allocated
+    /// Offset: 0x418
     pub num_pages: usize,
 
     /// Maximum number of pages this VM instance can allocate
+    /// Offset: 0x420
     pub max_pages: usize,
 
     /// Number of L2 tables currently allocated
+    /// Offset: 0x428
     pub num_l2_tables: usize,
 
     /// Maximum number of L2 tables this VM instance can allocate
+    /// Offset: 0x430
     pub max_l2_tables: usize,
 }
 
@@ -212,17 +262,21 @@ impl Memory {
 
         page_store.instance_count += 1;
 
-        // Initialize L2 tables with unmapped pages
-        let mut l2_tables = Vec::with_capacity(max_l2_tables);
-        for _ in 0..max_l2_tables {
-            l2_tables.push(vec![UNMAPPED_PAGE; L2_TABLE_SIZE]);
-        }
+        // Allocate L2 tables as contiguous array
+        // Each table is L2_TABLE_SIZE entries, all tables in a row
+        let total_l2_entries = max_l2_tables * L2_TABLE_SIZE;
+        let l2_tables = vec![UNMAPPED_PAGE; total_l2_entries].into_boxed_slice();
+        let l2_tables_ptr = Box::into_raw(l2_tables) as *mut u16;
+
+        // Allocate allocated_indices array
+        let allocated_indices = vec![0u16; max_pages].into_boxed_slice();
+        let allocated_indices_ptr = Box::into_raw(allocated_indices) as *mut u16;
 
         Self {
             page_store: page_store as *mut PageStore,
-            l1_table: Box::new([UNMAPPED_L2_TABLE; L1_TABLE_SIZE]),
-            l2_tables: l2_tables.into_boxed_slice(),
-            allocated_indices: vec![0u16; max_pages].into_boxed_slice(),
+            l1_table: [UNMAPPED_L2_TABLE; L1_TABLE_SIZE],
+            l2_tables: l2_tables_ptr,
+            allocated_indices: allocated_indices_ptr,
             num_pages: 0,
             max_pages,
             num_l2_tables: 0,
@@ -268,9 +322,12 @@ impl Memory {
         };
 
         // Check if page is already mapped in L2 table
-        let l2_table = &self.l2_tables[l2_table_idx as usize];
-        if l2_table[l2_idx] != UNMAPPED_PAGE {
-            return MEM_SUCCESS; // Page already mapped
+        unsafe {
+            // Calculate offset to the L2 table entry
+            let l2_entry_offset = (l2_table_idx as usize) * L2_TABLE_SIZE + l2_idx;
+            if *self.l2_tables.add(l2_entry_offset) != UNMAPPED_PAGE {
+                return MEM_SUCCESS; // Page already mapped
+            }
         }
 
         // Check if we have room for another page
@@ -289,15 +346,16 @@ impl Memory {
 
             // Get next available page
             store.num_available_pages -= 1;
-            let page_idx = store.available_pages[store.num_available_pages];
+            let page_idx = *store.available_pages.add(store.num_available_pages);
 
             // Track this allocation
-            self.allocated_indices[self.num_pages] = page_idx;
+            *self.allocated_indices.add(self.num_pages) = page_idx;
             self.num_pages += 1;
 
             // Map in L2 table
-            let l2_table = &mut self.l2_tables[l2_table_idx as usize];
-            l2_table[l2_idx] = page_idx;
+            let l2_table_idx = self.l1_table[l1_idx] as usize;
+            let l2_entry_offset = l2_table_idx * L2_TABLE_SIZE + l2_idx;
+            *self.l2_tables.add(l2_entry_offset) = page_idx;
 
             MEM_SUCCESS
         }
@@ -320,14 +378,15 @@ impl Memory {
 
             // Return each page to the pool
             for i in 0..self.num_pages {
-                let page_idx = self.allocated_indices[i];
+                let page_idx = *self.allocated_indices.add(i);
 
                 // Clear the page memory
                 let offset = page_idx as usize * PAGE_SIZE;
-                store.page_memory[offset..offset + PAGE_SIZE].fill(0);
+                let page_ptr = store.page_memory.add(offset);
+                std::ptr::write_bytes(page_ptr, 0, PAGE_SIZE);
 
                 // Add page back to available pool
-                store.available_pages[store.num_available_pages] = page_idx;
+                *store.available_pages.add(store.num_available_pages) = page_idx;
                 store.num_available_pages += 1;
             }
 
@@ -336,7 +395,10 @@ impl Memory {
 
             // Clear all allocated L2 tables
             for l2_idx in 0..self.num_l2_tables {
-                self.l2_tables[l2_idx].fill(UNMAPPED_PAGE);
+                let table_offset = l2_idx * L2_TABLE_SIZE;
+                for i in 0..L2_TABLE_SIZE {
+                    *self.l2_tables.add(table_offset + i) = UNMAPPED_PAGE;
+                }
             }
 
             self.num_l2_tables = 0;
@@ -362,8 +424,30 @@ impl fmt::Debug for Memory {
 impl Drop for Memory {
     fn drop(&mut self) {
         unsafe {
+            // Reset to return pages to pool
+            self.reset();
+
             let store = &mut *self.page_store;
             store.instance_count -= 1;
+
+            // Clean up L2 tables
+            if !self.l2_tables.is_null() {
+                let total_l2_entries = self.max_l2_tables * L2_TABLE_SIZE;
+                let l2_tables = Box::from_raw(std::slice::from_raw_parts_mut(
+                    self.l2_tables,
+                    total_l2_entries,
+                ));
+                drop(l2_tables);
+            }
+
+            // Clean up allocated_indices
+            if !self.allocated_indices.is_null() {
+                let allocated_indices = Box::from_raw(std::slice::from_raw_parts_mut(
+                    self.allocated_indices,
+                    self.max_pages,
+                ));
+                drop(allocated_indices);
+            }
         }
     }
 }

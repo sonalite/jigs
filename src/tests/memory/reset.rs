@@ -50,16 +50,18 @@ fn memory_cleared() {
     assert_eq!(mem.allocate_page(0), MEM_SUCCESS);
 
     // Write some data to the page
-    let page_idx = mem.allocated_indices[0] as usize;
-    let offset = page_idx * PAGE_SIZE;
-    store.page_memory[offset] = 0x42;
-    store.page_memory[offset + 1] = 0x43;
+    unsafe {
+        let page_idx = *mem.allocated_indices.add(0) as usize;
+        let offset = page_idx * PAGE_SIZE;
+        *store.page_memory.add(offset) = 0x42;
+        *store.page_memory.add(offset + 1) = 0x43;
 
-    mem.reset();
+        mem.reset();
 
-    // Verify memory was cleared
-    assert_eq!(store.page_memory[offset], 0);
-    assert_eq!(store.page_memory[offset + 1], 0);
+        // Verify memory was cleared
+        assert_eq!(*store.page_memory.add(offset), 0);
+        assert_eq!(*store.page_memory.add(offset + 1), 0);
+    }
 }
 
 #[test]
@@ -107,15 +109,21 @@ fn l2_tables_cleared() {
     assert_eq!(mem.allocate_page(PAGE_SIZE as u32), MEM_SUCCESS);
 
     // Verify L2 entries are set
-    assert_ne!(mem.l2_tables[0][0], UNMAPPED_PAGE);
-    assert_ne!(mem.l2_tables[0][1], UNMAPPED_PAGE);
+    unsafe {
+        // First L2 table, first two entries
+        assert_ne!(*mem.l2_tables.add(0), UNMAPPED_PAGE);
+        assert_ne!(*mem.l2_tables.add(1), UNMAPPED_PAGE);
+    }
 
     mem.reset();
 
     // Verify L2 tables are cleared
-    for l2_table in mem.l2_tables.iter() {
-        for entry in l2_table.iter() {
-            assert_eq!(*entry, UNMAPPED_PAGE);
+    unsafe {
+        for i in 0..mem.max_l2_tables {
+            let table_offset = i * 256;
+            for j in 0..256 {
+                assert_eq!(*mem.l2_tables.add(table_offset + j), UNMAPPED_PAGE);
+            }
         }
     }
 }
