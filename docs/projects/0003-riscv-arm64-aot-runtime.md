@@ -1,4 +1,4 @@
-# Project 0003: RISC-V to ARM64 AOT Runtime 📋
+# Project 0003: RISC-V to ARM64 AOT Runtime 🚧
 
 ## Overview
 Implementation of an Ahead-of-Time (AOT) compiler runtime that translates RISC-V machine code to native ARM64 instructions and executes them. This enables running RISC-V programs directly on ARM64 hardware with near-native performance using a single-pass compilation strategy. Programs are compiled when loaded, not during execution.
@@ -288,23 +288,40 @@ src/tests/
 - ✅ Buffer read - Read arbitrary buffer from address, fill with zeros for unallocated pages
 - ✅ Buffer write - Write arbitrary buffer to address with page allocation as needed
 
-#### Module Core 📋
-- 📋 Module struct - Create Module struct with code buffer, PC mapping table with tests
-- 📋 Module compilation API - Implement Module::compile method that creates immutable module with tests
-- 📋 Module metadata - Track PC mapping and compilation metadata with tests
+#### Module Core 🚧
+- ✅ Module struct with instance tracking - Create Module struct with code buffer and instance count tracking to detect if dropped with instances
+- ✅ Module drop protection - Implement drop checks that prevent module from being dropped while instances are attached
+- 📋 Basic Module::compile stub - Create Module::compile that returns empty Module for testing
+- 📋 PC mapping table - Add PC to code offset mapping table to Module
+- 📋 Module immutability - Ensure Module is immutable after compilation (except memory pointer)
 - 📋 Module reuse tests - Test sharing modules across multiple instances
 
-#### Instance Core 📋
-- 📋 Instance struct and initialization - Create Instance struct with module reference, syscall handler, x30 storage, memory box with tests
+#### Instance Core 🚧
+- ✅ Instance struct creation - Create Instance struct with ability to attach/detach from modules
+- ✅ Module attachment - Implement attach/detach methods with proper reference counting on module
+- 📋 Instance memory integration - Add Memory struct to Instance with Box<Memory> for stable pointer
+- 📋 x30 storage setup - Add Box<u32> for x30 register storage in Instance
+- 📋 Spill stack allocation - Add spill stack for register save/restore during syscalls
 - 📋 Register read/write API - Implement read_register/write_register methods with x30 special handling and tests
 - 📋 Instance public API tests - Test all public methods and error cases
 - 📋 Instance reset functionality - Reset instance state while keeping module with tests
 
 #### ARM64 Encoder Foundation 📋
-- 📋 Encoder module structure - Create encoder.rs with ARM64 instruction format constants and tests
-- 📋 Register encoding - Implement register encoding helpers (X0-X31, SP, XZR) with tests
+- 📋 Create encoder.rs module - Create empty encoder.rs file and add to lib.rs
+- 📋 ARM64 instruction format constants - Add instruction format constants and masks
+- 📋 Basic register encoding - Implement encoding for X0-X31 registers
+- 📋 Special register encoding - Add support for SP and XZR registers
 - 📋 Immediate encoding - Add immediate value encoding and validation with tests
 - 📋 Branch offset encoding - Implement branch offset calculations with tests
+
+#### Barebones Compiler and Execution 📋
+- 📋 Minimal compiler setup - Create basic Compiler struct that can emit RET instruction
+- 📋 RET instruction encoding - Implement ARM64 RET instruction encoding in encoder
+- 📋 Make code buffer executable - Set up mmap with PROT_EXEC for ARM64 code execution
+- 📋 Basic Module::compile - Implement minimal compile() that creates Module with single RET
+- 📋 Memory pointer setup - Add logic to set Module's memory pointer before execution
+- 📋 Basic call_function - Implement minimal call_function that saves registers, jumps to code, restores registers
+- 📋 First execution test - Test call_function with simple RET that returns immediately
 
 #### Translator Foundation 📋
 - 📋 Translator module - Create translator.rs with translate_instruction dispatch and tests
@@ -312,10 +329,13 @@ src/tests/
 - 📋 Translation result type - Define structure for returning ARM64 instruction sequences
 
 #### Compiler Foundation 📋
-- 📋 Compiler struct - Create Compiler with code buffer, PC tracking, branch fixup list with tests
-- 📋 Code emission basics - Implement emit_instruction and buffer management with tests
-- 📋 PC mapping table - Implement RISC-V PC to ARM64 offset mapping with tests
-- 📋 Branch patching - Forward branch fixup list and resolution with tests
+- 📋 Basic Compiler struct - Create minimal Compiler struct with just code buffer and write position
+- 📋 Code buffer management - Add buffer bounds checking and write position tracking
+- 📋 Basic code emission - Implement emit_u32 method to write ARM64 instructions to buffer
+- 📋 PC tracking - Add RISC-V PC tracking and current PC management
+- 📋 PC mapping table - Implement RISC-V PC to ARM64 offset mapping table
+- 📋 Branch fixup list - Add forward branch fixup list structure
+- 📋 Branch patching - Implement branch resolution and patching logic
 - 📋 Compiler error handling - Buffer overflow, invalid instructions with tests
 - 📋 Spill stack management - Track stack depth, bounds checking with tests
 - 📋 x30 special handling - Compiler support for x30 spill/reload sequences with tests
@@ -325,18 +345,26 @@ src/tests/
 ### Phase 2: Minimal Execution Path 📋
 
 #### Essential ARM64 Instructions 📋
-- 📋 Move instructions - MOV, MOVZ ARM64 encoding (for loading immediates) with tests
-- 📋 Branch instructions - BR, RET ARM64 encoding (for JALR translation) with tests
-- 📋 Load/Store register - LDR, STR for x30 handling and memory access with tests
-- 📋 Add immediate - ADD with immediate for address calculations with tests
+- 📋 MOV instruction - Implement ARM64 MOV register-to-register encoding with tests
+- 📋 MOVZ instruction - Implement ARM64 MOVZ for loading immediates with tests
+- 📋 BR instruction - Implement ARM64 BR (branch register) encoding with tests
+- 📋 RET instruction - Implement ARM64 RET encoding with tests (if not done in barebones)
+- 📋 LDR instruction - Implement ARM64 LDR for loading from memory with tests
+- 📋 STR instruction - Implement ARM64 STR for storing to memory with tests
+- 📋 ADD immediate - Implement ARM64 ADD with immediate encoding with tests
 
 #### Critical Translations 📋
 - 📋 JALR translation - Indirect jump with PC table lookup, essential for RET with tests
 - 📋 ADDI translation - ARM64 ADD with immediate (often used with JALR for returns) with tests
 
 #### Execution Support 📋
-- 📋 Module compilation - Implement Module::compile with single-pass compilation and tests
-- 📋 Instance execution - Implement Instance::call_function with save/restore ARM64 registers, jump to module code with tests
+- 📋 Compiler integration in Module - Wire up Compiler to Module::compile method
+- 📋 Single instruction compilation - Compile a single RISC-V instruction to ARM64
+- 📋 Multi-instruction compilation - Extend to compile multiple instructions
+- 📋 Register save logic - Implement ARM64 register save (x19-x28, x29, x30, sp)
+- 📋 Register restore logic - Implement ARM64 register restore after execution
+- 📋 Jump to compiled code - Implement the actual jump to Module's code buffer
+- 📋 Return value handling - Extract a0 (x10) as return value from call_function
 - 📋 Basic execution test - Test call_function with JALR return
 - 📋 Module sharing test - Test multiple instances executing same module
 
