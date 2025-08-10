@@ -8,6 +8,7 @@ Implementation of an Ahead-of-Time (AOT) compiler runtime that translates RISC-V
 ### Design Principles
 - **Single-pass compilation**: Direct RISC-V to ARM64 translation, maximizes compilation speed
 - **Module/Instance separation**: Compiled code (Module) is separate from runtime state (Instance), enabling code reuse
+- **Dynamic module attachment**: Instances can attach/detach from different modules at runtime for flexibility
 - **Fixed allocations**: All memory allocated in `new()`, no runtime allocations for predictable performance
 - **Direct register mapping**: RISC-V registers live in ARM64 hardware registers for maximum performance
 - **Direct execution**: Compiled code runs natively without interpretation overhead
@@ -65,14 +66,16 @@ Implementation of an Ahead-of-Time (AOT) compiler runtime that translates RISC-V
 - Compiled code can directly access memory via this fixed pointer
 - Immutable after compilation (except for memory pointer update)
 - Code buffer made executable after compilation
+- Tracks count of attached instances (prevents dropping while instances attached)
 
 ### Instance (`src/instance.rs`)
 - Runtime state for executing a compiled Module
+- Can be dynamically attached/detached from different modules
 - x30 as `Box<u32>` for direct memory access
 - Memory system as `Box<Memory>` with stable pointer for native code access
 - Sets Module's memory pointer to its Memory before execution
 - Spill stack for register save/restore during syscalls
-- Reference to Module for code execution
+- Pointer to Module for code execution
 - Generic syscall handler type: `S: Fn(&mut Instance<S>, u32) -> Result<(), RuntimeError>`
 - No RISC-V register storage (except x30) - registers live in ARM64 hardware
 
@@ -115,6 +118,8 @@ Implementation of an Ahead-of-Time (AOT) compiler runtime that translates RISC-V
 
 ### Public API
 
+**Note**: The APIs shown below represent the planned interface. The actual implementation may differ as the project evolves.
+
 #### Module API
 ```rust
 impl Module {
@@ -124,10 +129,11 @@ impl Module {
 
 #### Instance API
 ```rust
-impl<S> Instance<S> 
-    where S: Fn(&mut Instance<S>, u32) -> Result<(), RuntimeError> 
-{
-    pub fn new(module: Arc<Module>, memory_size: usize, syscall_handler: S) -> Self
+impl Instance {
+    pub fn new() -> Self  // Create unattached instance
+    pub fn attach(&mut self, module: &mut Module)  // Attach to a module (auto-detaches from previous)
+    pub fn detach(&mut self)  // Detach from current module
+    pub fn attached(&self) -> bool  // Check if attached to a module
     pub fn call_function(&mut self, address: u32, args: &[u32]) -> Result<u32>  // Executes compiled code
     pub fn read_register(&self, reg: u8) -> u32
     pub fn write_register(&mut self, reg: u8, value: u32)

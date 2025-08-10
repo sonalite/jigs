@@ -30,8 +30,13 @@
 ## Code Style Conventions
 - File ordering: module docs → `mod` declarations → `use` statements → constants → types → implementations
 - Module visibility: Only mark modules as public (`pub mod`) if their contents are actually used elsewhere. Test modules should generally use `mod` not `pub mod`
-- Use statements: Combine imports from the same crate to minimize use statements. For example, prefer `use crate::{EncodeError, Instruction};` over separate `use crate::EncodeError;` and `use crate::Instruction;` statements
+- Use statements: Always combine imports from the same crate or module to minimize use statements. For example:
+  - GOOD: `use crate::{memory::Memory, module::Module};`
+  - BAD: `use crate::memory::Memory;` followed by `use crate::module::Module;`
+  - GOOD: `use std::{ptr, fmt};`
+  - BAD: `use std::ptr;` followed by `use std::fmt;`
 - File naming: Prefer single-word names for files and modules when possible (e.g., `unimplemented.rs` instead of `not_implemented.rs`, `bounds` instead of `bounds_checking`)
+- Method naming: Boolean methods should omit the verb prefix when it doesn't change meaning (e.g., `attached()` instead of `is_attached()`, `empty()` instead of `is_empty()`, `valid()` instead of `is_valid()`)
 - **VERY IMPORTANT**: Always run `cargo fmt` and `cargo clippy` as the final step before finishing any work to ensure code formatting and linting standards are met
 - Before committing: ensure `cargo build`, `cargo test`, `cargo test --doc`, `cargo tarpaulin`, `cargo fmt -- --check`, and `cargo clippy` produce no warnings
 - Documentation: Keep all module-level documentation up-to-date, including examples in doc comments
