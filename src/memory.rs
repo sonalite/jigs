@@ -367,6 +367,66 @@ impl Memory {
         }
     }
 
+    /// Read data from memory into the provided buffer
+    ///
+    /// Reads `buffer.len()` bytes starting from the given address. If a page
+    /// is not allocated, the corresponding bytes in the buffer are filled with zeros.
+    ///
+    /// This method is optimized for performance and handles:
+    /// - Reading across page boundaries
+    /// - Sparse memory regions (unallocated pages read as zeros)
+    /// - Partial page reads
+    ///
+    /// # Arguments
+    /// * `address` - The starting address to read from
+    /// * `buffer` - The buffer to fill with read data
+    pub fn read(&self, address: u32, buffer: &mut [u8]) {
+        let mut addr = address;
+        let mut offset = 0;
+        let len = buffer.len();
+
+        while offset < len {
+            // Calculate how many bytes to read from current page
+            let page_offset = (addr & PAGE_OFFSET_MASK) as usize;
+            let bytes_in_page = (PAGE_SIZE - page_offset).min(len - offset);
+
+            // Extract L1 and L2 indices
+            let l1_idx = ((addr >> L1_INDEX_SHIFT) & L1_INDEX_MASK) as usize;
+            let l2_idx = ((addr >> L2_INDEX_SHIFT) & L2_INDEX_MASK) as usize;
+
+            // Check if L2 table exists
+            let l2_table_idx = self.l1_table[l1_idx];
+            if l2_table_idx == UNMAPPED_L2_TABLE {
+                // No L2 table - fill with zeros
+                buffer[offset..offset + bytes_in_page].fill(0);
+            } else {
+                // Get page index from L2 table
+                unsafe {
+                    let l2_entry_offset = (l2_table_idx as usize) * L2_TABLE_SIZE + l2_idx;
+                    let page_idx = *self.l2_tables.add(l2_entry_offset);
+
+                    if page_idx == UNMAPPED_PAGE {
+                        // Page not allocated - fill with zeros
+                        buffer[offset..offset + bytes_in_page].fill(0);
+                    } else {
+                        // Copy data from the page
+                        let page_addr = self
+                            .page_memory
+                            .add(page_idx as usize * PAGE_SIZE + page_offset);
+                        std::ptr::copy_nonoverlapping(
+                            page_addr,
+                            buffer[offset..].as_mut_ptr(),
+                            bytes_in_page,
+                        );
+                    }
+                }
+            }
+
+            offset += bytes_in_page;
+            addr = addr.wrapping_add(bytes_in_page as u32);
+        }
+    }
+
     /// Reset this memory instance, returning all pages to the pool
     ///
     /// This clears both levels of the page table hierarchy:
