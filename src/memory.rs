@@ -195,10 +195,15 @@ pub struct Memory {
     /// Offset: 0x000
     pub page_store: *mut PageStore,
 
+    /// Cached pointer to the start of page memory for fast access
+    /// This points to the same memory as PageStore.page_memory
+    /// Offset: 0x008
+    pub page_memory: *mut u8,
+
     /// Level 1 page table: maps L1 index to L2 table index (0-254) or UNMAPPED_L2_TABLE (0xFF)
     /// Using u8 saves memory: 1024 entries × 1 byte = 1KB
     /// Embedded directly in the struct for efficient access
-    /// Offset: 0x008
+    /// Offset: 0x010
     /// Size: 0x400 (1024 bytes)
     pub l1_table: [u8; L1_TABLE_SIZE],
 
@@ -206,27 +211,27 @@ pub struct Memory {
     /// Pre-allocated as contiguous array for predictable memory usage and ARM64 access
     /// Each L2 table is L2_TABLE_SIZE (256) u16 entries
     /// Table N starts at offset N * L2_TABLE_SIZE * sizeof(u16)
-    /// Offset: 0x408
+    /// Offset: 0x410
     pub l2_tables: *mut u16,
 
     /// Fixed array of allocated page indices for ARM64 access
-    /// Offset: 0x410
+    /// Offset: 0x418
     pub allocated_indices: *mut u16,
 
     /// Number of pages currently allocated
-    /// Offset: 0x418
+    /// Offset: 0x420
     pub num_pages: usize,
 
     /// Maximum number of pages this VM instance can allocate
-    /// Offset: 0x420
+    /// Offset: 0x428
     pub max_pages: usize,
 
     /// Number of L2 tables currently allocated
-    /// Offset: 0x428
+    /// Offset: 0x430
     pub num_l2_tables: usize,
 
     /// Maximum number of L2 tables this VM instance can allocate
-    /// Offset: 0x430
+    /// Offset: 0x438
     pub max_l2_tables: usize,
 }
 
@@ -274,6 +279,7 @@ impl Memory {
 
         Self {
             page_store: page_store as *mut PageStore,
+            page_memory: page_store.page_memory,
             l1_table: [UNMAPPED_L2_TABLE; L1_TABLE_SIZE],
             l2_tables: l2_tables_ptr,
             allocated_indices: allocated_indices_ptr,
@@ -382,7 +388,7 @@ impl Memory {
 
                 // Clear the page memory
                 let offset = page_idx as usize * PAGE_SIZE;
-                let page_ptr = store.page_memory.add(offset);
+                let page_ptr = self.page_memory.add(offset);
                 std::ptr::write_bytes(page_ptr, 0, PAGE_SIZE);
 
                 // Add page back to available pool
