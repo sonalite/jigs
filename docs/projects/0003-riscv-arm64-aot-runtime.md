@@ -7,11 +7,12 @@ Implementation of an Ahead-of-Time (AOT) compiler runtime that translates RISC-V
 
 ### Design Principles
 - **Single-pass compilation**: Direct RISC-V to ARM64 translation, maximizes compilation speed
+- **Module/Instance separation**: Compiled code (Module) is separate from runtime state (Instance), enabling code reuse
 - **Fixed allocations**: All memory allocated in `new()`, no runtime allocations for predictable performance
 - **Direct register mapping**: RISC-V registers live in ARM64 hardware registers for maximum performance
 - **Direct execution**: Compiled code runs natively without interpretation overhead
 - **x30 special case**: Preserves ARM64 link register functionality via memory storage
-- **Separate spill stack**: Keeps VM memory space clean and predictable
+- **Separate spill stack**: Keeps instance memory space clean and predictable
 - **Generic syscall handler**: Avoids dynamic dispatch overhead
 - **PC mapping table**: Enables efficient indirect jump handling
 - **Stubbed implementation**: Allows incremental development and testing
@@ -31,13 +32,13 @@ Implementation of an Ahead-of-Time (AOT) compiler runtime that translates RISC-V
 - **Address Split**: Bits 31-24 = L1 index (8 bits), Bits 23-14 = L2 index (10 bits), Bits 13-0 = page offset
 - **Page Table**: Two-level hierarchy with L1 table and L2 tables
 - **Page Table Entry**: 16-bit index into global page pool (supports up to 65,536 pages = 1GB total)
-- **Page Permissions**: Read/write only (no execute flag needed for VM memory)
+- **Page Permissions**: Read/write only (no execute flag needed for instance memory)
 - **Memory Object**: Stored as `Box<Memory>` so native ARM64 code can access via direct pointer
-- **Global Page Pool**: Shared across all VM instances for efficient memory management
+- **Global Page Pool**: Shared across all instances for efficient memory management
 
 #### Other Memory Components
 - **Code Buffer**: Fixed size for AOT-compiled ARM64 code, made executable, tracks emission position
-- **Spill Stack**: Separate from VM memory, VM tracks stack depth with max size, native code increments/checks bounds
+- **Spill Stack**: Separate from instance memory, instance tracks stack depth with max size, native code increments/checks bounds
 - **x30 Storage**: `Box<u32>` with direct memory address accessible from compiled code
 - **PC Mapping Table**: RISC-V PC to ARM64 code offset mapping for indirect jumps
 
@@ -51,21 +52,30 @@ Implementation of an Ahead-of-Time (AOT) compiler runtime that translates RISC-V
 ### System Instructions
 - **ECALL**: Generates ARM64 sequence to:
   1. Save all RISC-V registers to spill stack
-  2. Set x0 = VM pointer, x1 = syscall number (from a7)
+  2. Set x0 = instance pointer, x1 = syscall number (from a7)
   3. Call syscall handler following ARM64 ABI
   4. Restore all registers from spill stack
 - **EBREAK**: Treated as NOP (or optionally halt)
 
-### Virtual Machine (`src/vm.rs`)
-- Generic syscall handler type: `S: Fn(&mut VirtualMachine<S>, u32) -> Result<(), RuntimeError>`
+### Module (`src/module.rs`)
+- Contains compiled ARM64 code in fixed-size buffer
+- PC to code offset mapping table for indirect jumps
+- PC to code offset mapping table for indirect jumps
+- Immutable after compilation - can be shared across instances
+- Code buffer made executable after compilation
+- No runtime state - purely compiled code and metadata
+
+### Instance (`src/instance.rs`)
+- Runtime state for executing a compiled Module
 - x30 as `Box<u32>` for direct memory access
 - Memory system as `Box<Memory>` with pointer passed to native code
-- Fixed-size code buffer and memory allocations
-- PC to code offset mapping table
-- No RISC-V register storage (except x30)
+- Spill stack for register save/restore during syscalls
+- Reference to Module for code execution
+- Generic syscall handler type: `S: Fn(&mut Instance<S>, u32) -> Result<(), RuntimeError>`
+- No RISC-V register storage (except x30) - registers live in ARM64 hardware
 
 ### Memory Management (`src/memory.rs`)
-- **Global PageStore**: Pre-allocated page pool shared across all VM instances
+- **Global PageStore**: Pre-allocated page pool shared across all instances
 - **Memory Struct**: Stored in `Box<Memory>` for stable pointer access from native code
   - Contains page table and references to allocated pages from global pool
 - **Page Table**: Two-level hierarchy - L1 table points to L2 tables, L2 entries index into global page pool
@@ -84,11 +94,11 @@ Implementation of an Ahead-of-Time (AOT) compiler runtime that translates RISC-V
 
 ### Compiler (`src/compiler.rs`)
 - **Compilation orchestration**: Manages single-pass RISC-V to ARM64 translation
-- **Code emission**: Writes ARM64 instructions directly to fixed code buffer
+- **Code emission**: Writes ARM64 instructions directly to Module's code buffer
 - **PC tracking**: Maintains current RISC-V PC and PC to ARM64 offset mapping
 - **Branch patching**: Forward branch fixup list and resolution
 - **Buffer management**: Write position tracking and bounds checking
-- **Special registers**: Pointer to x30 storage and spill stack management
+- **Module generation**: Creates immutable Module with compiled code and metadata
 - Calls translator for per-instruction translation logic
 
 ### Translator (`src/translator.rs`)
@@ -102,17 +112,28 @@ Implementation of an Ahead-of-Time (AOT) compiler runtime that translates RISC-V
 - **Exit**: Restore all saved ARM64 registers and stack pointer, return a0 value
 
 ### Public API
-```rust
-pub fn new<S>(memory_size: usize, code_buffer_size: usize, syscall_handler: S) -> Self
-    where S: Fn(&mut VirtualMachine<S>, u32) -> Result<(), RuntimeError>
 
-pub fn load_program(&mut self, code: &[u8], address: u32)  // Compiles RISC-V to ARM64
-pub fn call_function(&mut self, address: u32, args: &[u32]) -> Result<u32>  // Executes compiled code
-pub fn read_register(&self, reg: u8) -> u32
-pub fn write_register(&mut self, reg: u8, value: u32)
-pub fn read_memory(&self, address: u32, size: usize) -> Result<Vec<u8>>
-pub fn write_memory(&mut self, address: u32, data: &[u8]) -> Result<()>
-pub fn run(&mut self) -> Result<RunResult>
+#### Module API
+```rust
+impl Module {
+    pub fn compile(code: &[u8], address: u32) -> Result<Module>  // Compiles RISC-V to ARM64
+}
+```
+
+#### Instance API
+```rust
+impl<S> Instance<S> 
+    where S: Fn(&mut Instance<S>, u32) -> Result<(), RuntimeError> 
+{
+    pub fn new(module: Arc<Module>, memory_size: usize, syscall_handler: S) -> Self
+    pub fn call_function(&mut self, address: u32, args: &[u32]) -> Result<u32>  // Executes compiled code
+    pub fn read_register(&self, reg: u8) -> u32
+    pub fn write_register(&mut self, reg: u8, value: u32)
+    pub fn read_memory(&self, address: u32, size: usize) -> Result<Vec<u8>>
+    pub fn write_memory(&mut self, address: u32, data: &[u8]) -> Result<()>
+    pub fn run(&mut self) -> Result<RunResult>
+    pub fn reset(&mut self)  // Reset instance state while keeping the module
+}
 ```
 
 ### Testing
@@ -159,13 +180,24 @@ src/tests/
 │   ├── x30_spill.rs        # x30 memory spill/reload
 │   └── instruction_sequences.rs  # Instruction translation patterns
 │
-└── vm/                # Virtual machine tests
-    ├── creation.rs    # VM instantiation and initialization
-    ├── api.rs         # Public API surface tests
-    ├── registers.rs   # Register read/write operations
-    ├── memory.rs      # Memory read/write operations
-    ├── syscalls.rs    # Syscall handler integration
-    ├── execution.rs   # call_function mechanism
+├── module/            # Module compilation tests
+│   ├── creation.rs    # Module instantiation and compilation
+│   ├── api.rs         # Module public API tests
+│   ├── compilation.rs # RISC-V to ARM64 compilation tests
+│   ├── metadata.rs    # PC mapping and compilation metadata
+│   └── reuse.rs       # Module sharing across instances
+│
+├── instance/          # Instance runtime tests
+│   ├── creation.rs    # Instance instantiation with module
+│   ├── api.rs         # Instance public API surface tests
+│   ├── registers.rs   # Register read/write operations
+│   ├── memory.rs      # Memory read/write operations
+│   ├── syscalls.rs    # Syscall handler integration
+│   ├── execution.rs   # call_function mechanism
+│   ├── reset.rs       # Instance reset functionality
+│   └── multi.rs       # Multiple instances sharing a module
+│
+└── integration/       # Combined module+instance tests
     ├── programs/      # Complete program execution tests
     │   ├── simple.rs      # Basic arithmetic programs
     │   ├── loops.rs       # Loop constructs
@@ -173,7 +205,7 @@ src/tests/
     │   ├── recursive.rs   # Recursive functions
     │   ├── syscalls.rs    # Programs using syscalls
     │   └── stress.rs      # Performance stress tests
-    └── instructions/  # Per-instruction VM integration tests
+    └── instructions/  # Per-instruction instance integration tests
         ├── register/      # R-type instructions
         │   ├── add.rs     # ADD with all register combinations
         │   ├── sub.rs     # SUB with overflow cases
@@ -241,14 +273,21 @@ src/tests/
 - ✅ Memory struct and page table - Create Memory struct with page table array referencing global pool
 - ✅ Page allocation and management - Implement lazy page allocation from global pool with tests
 - 📋 Memory ARM64 access routines - Native ARM64 assembly for page table lookup and memory access
-- ✅ Memory helper wrappers - Rust wrappers for VM read_memory/write_memory methods
+- ✅ Memory helper wrappers - Rust wrappers for instance read_memory/write_memory methods
 - ✅ Memory reset functionality - Return pages to global pool and clear page table with tests
 - ✅ Memory boundary tests - Test page boundaries, sparse allocation, stress tests
 
-#### Virtual Machine Core 📋
-- 📋 VM struct and initialization - Create VirtualMachine struct with syscall handler, x30 storage, memory box with tests
+#### Module Core 📋
+- 📋 Module struct - Create Module struct with code buffer, PC mapping table with tests
+- 📋 Module compilation API - Implement Module::compile method that creates immutable module with tests
+- 📋 Module metadata - Track PC mapping and compilation metadata with tests
+- 📋 Module reuse tests - Test sharing modules across multiple instances
+
+#### Instance Core 📋
+- 📋 Instance struct and initialization - Create Instance struct with module reference, syscall handler, x30 storage, memory box with tests
 - 📋 Register read/write API - Implement read_register/write_register methods with x30 special handling and tests
-- 📋 VM public API tests - Test all public methods and error cases
+- 📋 Instance public API tests - Test all public methods and error cases
+- 📋 Instance reset functionality - Reset instance state while keeping module with tests
 
 #### ARM64 Encoder Foundation 📋
 - 📋 Encoder module structure - Create encoder.rs with ARM64 instruction format constants and tests
@@ -285,9 +324,10 @@ src/tests/
 - 📋 ADDI translation - ARM64 ADD with immediate (often used with JALR for returns) with tests
 
 #### Execution Support 📋
-- 📋 Load program - Implement load_program with single-pass compilation and tests
-- 📋 Call function mechanism - Save/restore ARM64 registers, jump to compiled code with tests
+- 📋 Module compilation - Implement Module::compile with single-pass compilation and tests
+- 📋 Instance execution - Implement Instance::call_function with save/restore ARM64 registers, jump to module code with tests
 - 📋 Basic execution test - Test call_function with JALR return
+- 📋 Module sharing test - Test multiple instances executing same module
 
 ### Phase 3: Memory Access Instructions 📋
 

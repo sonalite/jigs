@@ -31,11 +31,11 @@ ARM64 instruction encoding for AOT compilation
 ### `src/compiler.rs`
 AOT compiler managing RISC-V to ARM64 translation
 - Single-pass compilation orchestration
-- Direct code emission to fixed-size buffer
+- Direct code emission to Module's code buffer
 - PC tracking and RISC-V PC to ARM64 offset mapping
 - Branch patching with forward branch fixup list
 - Buffer management with write position tracking
-- Special register handling (x30 storage pointer, spill stack)
+- Creates immutable Module with compiled code and metadata
 - Calls translator for per-instruction logic
 
 ### `src/translator.rs`
@@ -46,25 +46,39 @@ Per-instruction RISC-V to ARM64 translation logic
 - ECALL/EBREAK system instruction handling
 - Returns ARM64 instruction sequences for compiler to emit
 
-### `src/vm.rs`
-Virtual machine runtime
-- Generic syscall handler: `S: Fn(&mut VirtualMachine<S>, u32) -> Result<(), RuntimeError>`
+### `src/module.rs`
+Compiled ARM64 code module (immutable, reusable)
+- Fixed-size code buffer containing compiled ARM64 instructions
+- PC to code offset mapping table for indirect jumps
+- Immutable after compilation - can be shared across instances
+- Code buffer made executable after compilation
+- No runtime state - purely compiled code and metadata
+- Public API: `compile()`
+
+### `src/instance.rs`
+Runtime instance for executing a compiled Module
+- Reference to compiled Module (Arc for sharing)
+- Generic syscall handler: `S: Fn(&mut Instance<S>, u32) -> Result<(), RuntimeError>`
 - x30 register stored as `Box<u32>` for memory access
 - Memory system as `Box<Memory>` with stable pointer for native code
-- Fixed-size code buffer and allocations (no runtime allocation)
-- PC to code offset mapping table for indirect jumps
+- Spill stack for register save/restore during syscalls
 - No RISC-V register storage (except x30) - registers live in ARM64 hardware
-- Public API: `new()`, `load_program()`, `call_function()`, `read/write_register()`, `read/write_memory()`, `run()`
+- Public API: `new()`, `call_function()`, `read/write_register()`, `read/write_memory()`, `run()`, `reset()`
 
 ### `src/memory.rs`
 Page-based memory system
-- 32-bit RISC-V address space with 4KB pages
-- Page table: 2MB fixed array (2^20 entries × 2 bytes)
-- Page table entry: 16-bit index into page array (supports 256MB total)
+- 32-bit RISC-V address space with 16KB pages (2^14 bytes)
+- Two-level page table hierarchy:
+  - L1 table: 256 entries (bits 31-24 = 8 bits)
+  - L2 tables: 1024 entries each (bits 23-14 = 10 bits)
+  - Page offset: bits 13-0 (16KB pages)
+- Page table entry: 16-bit index into global page pool (supports 65,536 pages = 1GB total)
+- Global PageStore: Pre-allocated page pool shared across all instances
+- Memory struct stored as `Box<Memory>` for stable pointer access from native code
 - Sparse allocation with lazy page allocation
-- Page structure: 4KB data buffer + start address field
-- Pre-allocated page pool to avoid runtime allocation
-- Reset functionality between executions
+- Page structure: 16KB data buffer
+- Memory operations: Native ARM64 code directly accesses via pointer
+- Reset functionality: Return pages to global pool and clear page table
 - Direct pointer access from native ARM64 code
 
 ## Test Structure
@@ -85,4 +99,6 @@ RISC-V instruction tests (subfolders contain tests for each instruction type)
 - `memory/` - Memory system tests
 - `compiler/` - Compiler tests
 - `translator/` - Translator tests
-- `vm/` - Virtual machine and program execution tests
+- `module/` - Module compilation and metadata tests
+- `instance/` - Instance runtime and execution tests
+- `integration/` - Combined module+instance integration tests
